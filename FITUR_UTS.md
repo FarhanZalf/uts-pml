@@ -48,13 +48,13 @@ Sesuai dengan tabel kriteria penilaian lembar soal UTS PML:
 | 17 | Database Sqlite | ✅ Selesai | 1% | CartDatabaseHelper: cart_items & orders_history offline |
 | 18 | Database MySQL & Web Service/API | Dalam Antrean | 2% | Terintegrasi dengan API Laravel Erles Bakery ERP |
 | 19 | Pustaka Volley | Dalam Antrean | 1% | Konsumsi HTTP REST API backend Laravel (JSON Request & Response) |
-| 20 | Kamera | Dalam Antrean | 1% | Pengambilan foto referensi custom cake / bukti pembayaran |
+| 20 | Kamera | - | 1% | *(Dilewati - tidak relevan untuk alur pemesanan pembeli)* |
 | 21 | GPS | ✅ Selesai | 2% | Deteksi otomatis koordinat GPS pelanggan via Fused/LocationManager di Checkout |
 | 22 | Google Maps / OpenStreetMaps | ✅ Selesai | 2% | Peta OSM interaktif (pilih titik alamat di Checkout, rute pengantaran kurir & lokasi toko di Tracking) |
 | 23 | SharedPreferences | ✅ Selesai | 1% | Menyimpan otomatis Nama & No. WA pelanggan di CheckoutActivity |
 | 24 | Audio/Video | - | 1% | *(Dilewati sesuai kesepakatan fitur fokus bakery)* |
 | 25 | QR-Code | ✅ Selesai | 2% | Generator QR-Code tiket pengambilan kasir (ZXing) di TrackingFragment |
-| 26 | Gallery | Dalam Antrean | 1% | Pilih gambar dari galeri HP untuk lampiran pesanan custom |
+| 26 | Gallery | - | 1% | *(Dilewati - tidak relevan untuk alur pemesanan pembeli)* |
 | 27 | Aplikasi Web (DB Terintegrasi Mobile) | Siap (PTT) | 10% | Backend Web ERP Laravel Erles Bakery |
 | 28 | Aplikasi IoT | - | 10% | *(Dilewati - fokus pada aplikasi pemesanan e-commerce)* |
 | 29 | Firebase Authentication | - | 6% | *(Dilewati - pelanggan pesan langsung tanpa akun/guest checkout)* |
