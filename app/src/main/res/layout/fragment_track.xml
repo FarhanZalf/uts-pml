@@ -401,59 +401,7 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- KARTU 3: CARI BERDASARKAN KODE PESANAN TERTENTU (SEKUNDER) -->
-        <LinearLayout
-            android:id="@+id/cardSearchOrder"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:background="@drawable/bg_product_card"
-            android:orientation="vertical"
-            android:padding="14dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Lacak Kode Pesanan Lain"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/etSearchOrderCode"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_search_bar"
-                    android:hint="Ketik kode (cth: ORD-...)"
-                    android:inputType="textCapCharacters"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_muted"
-                    android:textSize="13sp" />
-
-                <Button
-                    android:id="@+id/btnSearchOrder"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/bg_button_primary"
-                    android:minWidth="80dp"
-                    android:text="Cari"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </LinearLayout>
 
         <!-- KARTU 4: DAFTAR SEMUA RIWAYAT PESANAN (SQLite orders_history) -->
         <TextView

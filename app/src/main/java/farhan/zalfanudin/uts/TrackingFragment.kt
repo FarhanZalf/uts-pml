@@ -50,23 +50,7 @@ class TrackingFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        // Tombol Cari Kode Pesanan Lain
-        binding.btnSearchOrder.setOnClickListener {
-            val codeInput = binding.etSearchOrderCode.text.toString().trim()
-            if (codeInput.isEmpty()) {
-                binding.etSearchOrderCode.error = "Ketik kode pesanan"
-                return@setOnClickListener
-            }
-
-            val foundOrder = cartDbHelper.getOrderByCode(codeInput)
-            if (foundOrder != null) {
-                displayOrderDetail(foundOrder)
-                binding.scrollTrack.smoothScrollTo(0, binding.cardTrackingDetail.top)
-                Toast.makeText(requireContext(), "Memuat data pesanan: ${foundOrder.orderCode}", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(requireContext(), "Pesanan '$codeInput' tidak ditemukan", Toast.LENGTH_SHORT).show()
-            }
-        }
+        // Interaksi klik kartu riwayat otomatis memuat pesanan ke tracker utama
     }
 
     private fun loadData() {
@@ -76,11 +60,9 @@ class TrackingFragment : Fragment() {
         if (orders.isEmpty()) {
             binding.cardTrackingDetail.visibility = View.GONE
             binding.panelDemoTesting.visibility = View.GONE
-            binding.cardSearchOrder.visibility = View.GONE
             binding.layoutHistoryEmpty.visibility = View.VISIBLE
         } else {
             binding.layoutHistoryEmpty.visibility = View.GONE
-            binding.cardSearchOrder.visibility = View.VISIBLE
             binding.panelDemoTesting.visibility = View.VISIBLE
 
             // Otomatis menampilkan pesanan paling baru jika belum ada yang dipilih
