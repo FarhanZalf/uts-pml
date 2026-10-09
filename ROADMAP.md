@@ -40,9 +40,14 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
   - **Diferensiasi Alur Pickup vs Delivery**:
     - **Ambil di Toko (Pickup)**: Tahap "Siap Diambil di Outlet" + **QR-Code Tiket Kasir** resmi.
     - **Diantar Kurir (Delivery)**: Tahap "Kurir Sedang Menuju Alamat" + rute & info alamat rumah + kontak kurir WA (QR-Code kasir disembunyikan).
+  - **Fitur Pembatalan Pesanan oleh Pelanggan (SELESAI)**:
+    - Tombol `Batalkan Pesanan Ini` (outline merah) muncul saat status masih `pending`.
+    - Dilengkapi pop-up dialog konfirmasi `AlertDialog` sebelum pembatalan dilakukan.
+    - Saat dibatalkan, status berubah menjadi `dibatalkan` (badge merah) dan tahapan pemrosesan dihentikan.
+    - Tombol otomatis disembunyikan jika pesanan sudah `diproses`, `siap`, atau `selesai`.
   - **Panel Simulasi Dosen**: Tombol ubah status dibungkus khusus dalam panel `[Mode Pengujian Dosen: Simulasi Kasir]` agar terpisah jelas dari fitur customer.
   - Form pencarian kode pesanan sekunder (opsional jika ingin mengecek nomor nota lain).
-  - Daftar riwayat seluruh pesanan dari SQLite `orders_history`.
+  - Daftar riwayat seluruh pesanan dari SQLite `orders_history` (dilengkapi badge merah untuk pesanan dibatalkan).
   - `OptionsMenu` di Toolbar utama (Tentang Toko, Panduan, Hubungi WA, Refresh).
 
 ---
@@ -75,8 +80,9 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
 ---
 
 #### 📌 FASE 3: Integrasi API Laravel (Volley) & Cloud Messaging (FCM)
-- [ ] Penambahan pustaka Volley & ApiClient (Konfirmasi pengguna terlebih dahulu)
-- [ ] Penggantian mock data ke endpoint Laravel API (`GET /categories`, `GET /products`, `POST /orders`, `GET /orders/track/{code}`)
+- [ ] **Pustaka Volley & Integrasi API Laravel (Delegasi ke Rekan Tim: Chelsea)**:
+  - Rekan tim mengerjakan endpoint API di Laravel dan konsumsi Volley di Android (`GET /api/products`, `POST /api/orders`, dsb.).
+  - Seluruh kode Android dasar yang sudah fix telah dimerge ke `main` agar rekan tim bisa langsung `git pull origin main`.
 - [ ] Firebase Cloud Messaging (FCM) untuk notifikasi status pesanan
 - [ ] Firebase In-App Messaging untuk banner promo
 - [ ] Pengujian menyeluruh (*End-to-End Test*) & Penyusunan Laporan UTS
@@ -84,9 +90,13 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
 ---
 
 ### Status Pengerjaan Terkini (Current State)
-* **Tanggal Update**: 2026-10-10
-* **Fase Aktif**: **FASE 1 SELESAI (100%) & FASE 2 (GPS & OSM) SELESAI (100%)**
-* **Total Poin UTS Terkunci**: **34% Fitur Mobile + 10% Web Backend + 30% Laporan = 74%**
-* **Langkah Berikutnya**:
-  - Konfirmasi ke pengguna sebelum penambahan pustaka **Android Volley** untuk koneksi API MySQL Web Laravel.
+* **Tanggal Update**: 2026-10-10 (02:16 WIB)
+* **Fase Aktif**: **FASE 1 SELESAI (100%), FASE 2 (GPS & OSM) SELESAI (100%)**
+* **Status Git**: 
+  - Seluruh kode telah di-merge bersih ke branch `main` (Commit `c2c371e`) dan di-push ke remote `origin/main` & `origin/farhan-ganteng`.
+  - Proyek lolos uji kompilasi lokal Gradle: `BUILD SUCCESSFUL`.
+* **Total Poin UTS Terkunci Saat Ini**: **34% Fitur Mobile + 10% Web Backend + 30% Laporan = 74%**
+* **Posisi Terakhir**:
+  - Menunggu rekan tim menarik (*git pull*) kode di branch `main` untuk mengintegrasikan backend Laravel & Volley API.
+  - Fitur berikutnya di sisi Farhan: Notifikasi Status Pesanan (FCM) / Penyusunan Laporan UTS.
 
