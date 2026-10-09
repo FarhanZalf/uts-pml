@@ -1,12 +1,17 @@
 package farhan.zalfanudin.uts
 
 import android.content.Intent
+import android.location.Geocoder
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import farhan.zalfanudin.uts.data.CartDatabaseHelper
@@ -14,6 +19,12 @@ import farhan.zalfanudin.uts.databinding.FragmentTrackBinding
 import farhan.zalfanudin.uts.databinding.ItemOrderBinding
 import farhan.zalfanudin.uts.model.Order
 import farhan.zalfanudin.uts.util.QRCodeUtil
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
 import java.net.URLEncoder
 import java.text.NumberFormat
 import java.util.Locale
@@ -38,6 +49,7 @@ class TrackingFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        Configuration.getInstance().userAgentValue = requireContext().packageName
         cartDbHelper = CartDatabaseHelper(requireContext())
 
         setupListeners()
@@ -114,6 +126,10 @@ class TrackingFragment : Fragment() {
                 binding.ivOrderQrCode.setImageBitmap(qrBitmap)
             }
 
+            binding.btnViewBakeryLocation.setOnClickListener {
+                showBakeryLocationMapDialog()
+            }
+
             binding.btnContactKasirWa.text = "Hubungi Kasir Toko via WhatsApp"
         } else {
             // Mode Diantar Kurir
@@ -126,6 +142,10 @@ class TrackingFragment : Fragment() {
             binding.layoutQrCodeContainer.visibility = View.GONE
             binding.layoutDeliveryInfoContainer.visibility = View.VISIBLE
             binding.tvDeliveryHomeAddress.text = "Alamat Tujuan: ${order.address}"
+
+            binding.btnViewDeliveryRoute.setOnClickListener {
+                showDeliveryRouteMapDialog(order)
+            }
 
             binding.btnContactKasirWa.text = "Hubungi Kurir / CS via WhatsApp"
         }
@@ -312,6 +332,143 @@ class TrackingFragment : Fragment() {
 
     private fun formatRupiah(amount: Double): String {
         return "Rp " + NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).format(amount.toLong())
+    }
+
+    // Tampilkan Lokasi Outlet Toko di Peta OSM
+    private fun showBakeryLocationMapDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_osm_map, null)
+        val osmMapView = dialogView.findViewById<MapView>(R.id.osmMapView)
+        val tvMapTitle = dialogView.findViewById<TextView>(R.id.tvMapTitle)
+        val tvMapSubtitle = dialogView.findViewById<TextView>(R.id.tvMapSubtitle)
+        val tvSelectedAddressDesc = dialogView.findViewById<TextView>(R.id.tvSelectedAddressDesc)
+        val btnConfirmLocation = dialogView.findViewById<Button>(R.id.btnConfirmLocation)
+        val btnMapClose = dialogView.findViewById<ImageButton>(R.id.btnMapClose)
+
+        tvMapTitle.text = "Lokasi Outlet Erles Bakery"
+        tvMapSubtitle.text = "Jl. Mayor Bismo No. 27, Kota Kediri"
+        tvSelectedAddressDesc.text = "Outlet Erles Bakery (Jl. Mayor Bismo No. 27 Kediri) • Buka Setiap Hari 07:00 - 21:00 WIB"
+        btnConfirmLocation.text = "Tutup Peta"
+
+        osmMapView.setTileSource(TileSourceFactory.MAPNIK)
+        osmMapView.setMultiTouchControls(true)
+
+        val bakeryPoint = GeoPoint(-7.8014, 112.0069)
+        osmMapView.controller.setZoom(17.0)
+        osmMapView.controller.setCenter(bakeryPoint)
+
+        val marker = Marker(osmMapView).apply {
+            position = bakeryPoint
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            title = "Outlet Erles Bakery"
+            snippet = "Jl. Mayor Bismo No. 27 Kediri"
+        }
+        osmMapView.overlays.add(marker)
+        marker.showInfoWindow()
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        btnMapClose.setOnClickListener {
+            osmMapView.onDetach()
+            dialog.dismiss()
+        }
+
+        btnConfirmLocation.setOnClickListener {
+            osmMapView.onDetach()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    // Tampilkan Simulasi Rute Pengantaran Kurir Toko di Peta OSM
+    private fun showDeliveryRouteMapDialog(order: Order) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_osm_map, null)
+        val osmMapView = dialogView.findViewById<MapView>(R.id.osmMapView)
+        val tvMapTitle = dialogView.findViewById<TextView>(R.id.tvMapTitle)
+        val tvMapSubtitle = dialogView.findViewById<TextView>(R.id.tvMapSubtitle)
+        val tvSelectedAddressDesc = dialogView.findViewById<TextView>(R.id.tvSelectedAddressDesc)
+        val btnConfirmLocation = dialogView.findViewById<Button>(R.id.btnConfirmLocation)
+        val btnMapClose = dialogView.findViewById<ImageButton>(R.id.btnMapClose)
+
+        tvMapTitle.text = "Rute Pengantaran Kurir"
+        tvMapSubtitle.text = "Navigasi dari Outlet Toko ke Alamat Rumah Anda"
+        tvSelectedAddressDesc.text = "Dari Outlet Erles Bakery menuju: ${order.address}"
+        btnConfirmLocation.text = "Tutup Peta Rute"
+
+        osmMapView.setTileSource(TileSourceFactory.MAPNIK)
+        osmMapView.setMultiTouchControls(true)
+
+        val bakeryPoint = GeoPoint(-7.8014, 112.0069)
+        val customerPoint = getDestinationGeoPoint(order.address)
+
+        // Marker 1: Outlet Toko
+        val bakeryMarker = Marker(osmMapView).apply {
+            position = bakeryPoint
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            title = "Outlet Erles Bakery (Asal)"
+            snippet = "Jl. Mayor Bismo No. 27 Kediri"
+        }
+        osmMapView.overlays.add(bakeryMarker)
+
+        // Marker 2: Alamat Rumah Pelanggan
+        val customerMarker = Marker(osmMapView).apply {
+            position = customerPoint
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+            title = "Tujuan: ${order.customerName}"
+            snippet = order.address
+        }
+        osmMapView.overlays.add(customerMarker)
+
+        // Rute Garis Polyline menghubungkan Toko dan Rumah Pelanggan
+        val routeLine = Polyline(osmMapView).apply {
+            outlinePaint.color = ContextCompat.getColor(requireContext(), R.color.primary_dark)
+            outlinePaint.strokeWidth = 12f
+            addPoint(bakeryPoint)
+            // Waypoint belokan perantara agar jalur menyerupai rute jalan raya
+            val midPoint = GeoPoint((bakeryPoint.latitude + customerPoint.latitude) / 2, customerPoint.longitude)
+            addPoint(midPoint)
+            addPoint(customerPoint)
+        }
+        osmMapView.overlays.add(routeLine)
+
+        val centerLat = (bakeryPoint.latitude + customerPoint.latitude) / 2
+        val centerLng = (bakeryPoint.longitude + customerPoint.longitude) / 2
+        osmMapView.controller.setZoom(14.5)
+        osmMapView.controller.setCenter(GeoPoint(centerLat, centerLng))
+
+        customerMarker.showInfoWindow()
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        btnMapClose.setOnClickListener {
+            osmMapView.onDetach()
+            dialog.dismiss()
+        }
+
+        btnConfirmLocation.setOnClickListener {
+            osmMapView.onDetach()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun getDestinationGeoPoint(addressStr: String): GeoPoint {
+        return try {
+            val geocoder = Geocoder(requireContext(), Locale.forLanguageTag("id-ID"))
+            val list = geocoder.getFromLocationName(addressStr, 1)
+            if (!list.isNullOrEmpty()) {
+                GeoPoint(list[0].latitude, list[0].longitude)
+            } else {
+                GeoPoint(-7.8220, 112.0140)
+            }
+        } catch (_: Exception) {
+            GeoPoint(-7.8220, 112.0140)
+        }
     }
 
     override fun onDestroyView() {

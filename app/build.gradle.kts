@@ -45,7 +45,11 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
 
+    // Generator QR-Code tiket pengambilan pesanan kasir (Poin Penilaian Dosen UTS No. 25: QR-Code 2%)
     implementation("com.google.zxing:core:3.5.3")
+
+    // OpenStreetMap (OSM) peta lokasi toko & pengantaran (Poin Penilaian Dosen UTS No. 22: Maps/OSM 2%)
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)

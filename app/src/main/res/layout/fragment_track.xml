@@ -305,6 +305,22 @@
                     android:text="Tunjukkan QR ini ke kasir outlet Erles Bakery saat pengambilan roti."
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
+
+                <!-- Tombol Lihat Lokasi Outlet di Peta OSM (Poin Dosen #22) -->
+                <Button
+                    android:id="@+id/btnViewBakeryLocation"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:layout_marginTop="8dp"
+                    android:drawableStart="@drawable/ic_map"
+                    android:drawablePadding="6dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="Petunjuk Arah Outlet di Peta OSM"
+                    android:textAllCaps="false"
+                    android:textColor="@color/primary_dark"
+                    android:textSize="11sp" />
             </LinearLayout>
 
             <!-- SEKSI KHUSUS DELIVERY: INFORMASI PENGANTARAN KURIR -->
@@ -341,6 +357,23 @@
                     android:text="Roti akan diantar langsung oleh kurir ke alamat Anda sesuai jam pesanan. Mohon pastikan nomor WhatsApp Anda aktif."
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
+
+                <!-- Tombol Lihat Rute Pengantaran di Peta OSM (Poin Dosen #22) -->
+                <Button
+                    android:id="@+id/btnViewDeliveryRoute"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="8dp"
+                    android:drawableStart="@drawable/ic_map"
+                    android:drawablePadding="8dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="Lihat Rute Pengantaran di Peta OSM"
+                    android:textAllCaps="false"
+                    android:textColor="@color/status_blue"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <!-- TOMBOL AKSI: HUBUNGI VIA WHATSAPP -->

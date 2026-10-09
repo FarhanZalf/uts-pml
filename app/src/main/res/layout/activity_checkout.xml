@@ -195,6 +195,50 @@
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_muted"
                     android:textSize="13sp" />
+
+                <!-- Tombol Aksi GPS & Peta OSM (Poin Penilaian Dosen #21 GPS & #22 Maps/OSM) -->
+                <LinearLayout
+                    android:id="@+id/layoutGpsMapButtons"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/btnDetectGps"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:drawableStart="@drawable/ic_my_location"
+                        android:drawablePadding="6dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="GPS Lokasi Saya"
+                        android:textAllCaps="false"
+                        android:textColor="@color/primary_dark"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnOpenOsmMap"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:drawableStart="@drawable/ic_map"
+                        android:drawablePadding="6dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="Pilih di Peta OSM"
+                        android:textAllCaps="false"
+                        android:textColor="@color/primary_dark"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- KARTU 3: JADWAL PENGAMBILAN (Poin Dosen: DatePickerDialog & TimePickerDialog) -->
