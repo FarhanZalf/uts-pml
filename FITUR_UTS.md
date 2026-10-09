@@ -49,8 +49,8 @@ Sesuai dengan tabel kriteria penilaian lembar soal UTS PML:
 | 18 | Database MySQL & Web Service/API | Dalam Antrean | 2% | Terintegrasi dengan API Laravel Erles Bakery ERP |
 | 19 | Pustaka Volley | Dalam Antrean | 1% | Konsumsi HTTP REST API backend Laravel (JSON Request & Response) |
 | 20 | Kamera | Dalam Antrean | 1% | Pengambilan foto referensi custom cake / bukti pembayaran |
-| 21 | GPS | Dalam Antrean | 2% | Deteksi koordinat lokasi pelanggan untuk pengantaran pesanan |
-| 22 | Google Maps / OpenStreetMaps | Dalam Antrean | 2% | Tampilan peta penjemputan/pengantaran & rute ke toko roti |
+| 21 | GPS | ✅ Selesai | 2% | Deteksi otomatis koordinat GPS pelanggan via Fused/LocationManager di Checkout |
+| 22 | Google Maps / OpenStreetMaps | ✅ Selesai | 2% | Peta OSM interaktif (pilih titik alamat di Checkout, rute pengantaran kurir & lokasi toko di Tracking) |
 | 23 | SharedPreferences | ✅ Selesai | 1% | Menyimpan otomatis Nama & No. WA pelanggan di CheckoutActivity |
 | 24 | Audio/Video | - | 1% | *(Dilewati sesuai kesepakatan fitur fokus bakery)* |
 | 25 | QR-Code | ✅ Selesai | 2% | Generator QR-Code tiket pengambilan kasir (ZXing) di TrackingFragment |
