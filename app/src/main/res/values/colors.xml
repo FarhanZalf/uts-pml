@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Base Colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Erles Bakery Theme Colors -->
+    <color name="primary_caramel">#C87D38</color>
+    <color name="primary_dark">#B45309</color>
+    <color name="primary_light">#FDE68A</color>
+    <color name="secondary_cream">#FEF3C7</color>
+    <color name="background_soft">#FDFBF7</color>
+    <color name="surface_card">#FFFFFFFF</color>
+    <color name="border_soft">#EFE8E1</color>
+
+    <!-- Typography Colors -->
+    <color name="text_primary">#291E18</color>
+    <color name="text_secondary">#786053</color>
+    <color name="text_muted">#A39084</color>
+
+    <!-- Status Colors -->
+    <color name="status_green">#16A34A</color>
+    <color name="status_amber">#D97706</color>
+    <color name="status_red">#DC2626</color>
 </resources>
