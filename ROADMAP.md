@@ -47,29 +47,35 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
 
 ---
 
-#### 📌 ANTREAN REVISI LANJUTAN (BACKLOG ENHANCEMENT)
-> **PENTING**: Bagian ini mencatat usulan fitur tambahan hasil diskusi yang akan ditinjau kembali setelah alur dasar aplikasi selesai:
-- [ ] **Fitur Login & Register Akun Pelanggan (Authentication)**:
-  - **Status**: Disimpan sebagai revisi lanjutan.
-  - **Catatan**: Saat ini alur menggunakan *Guest Checkout* (nama & nomor WhatsApp disimpan via `SharedPreferences`) agar tidak terhambat oleh database backend teman. Begitu teman selesai merapikan backend/database dan menyediakan endpoint Auth (atau jika ingin mengaktifkan poin Firebase Auth 6%), fitur login/register akan dipasang sebelum checkout.
-- [ ] **Integrasi GPS & OpenStreetMap (OSM) di Alamat Pengantaran**:
-  - **Status**: Siap dikerjakan di FASE 2.
-  - **Catatan Alur**: 
-    1. Di layar Checkout (`CheckoutActivity`), saat memilih "Diantar ke Rumah", tombol GPS mendeteksi koordinat latitude/longitude pelanggan dan picker peta OSM memilih titik rumah.
-    2. Di layar Lacak (`TrackingFragment`), pesanan mode Delivery menampilkan peta rute dari Toko Erles Bakery (Jl. Mayor Bismo Kediri) ke titik rumah pelanggan.
+#### 📌 KEBIJAKAN PENGEMBANGAN & LOG DEPENDENSI GRADLE
+> **Aturan Wajib:**
+> 1. **Konfirmasi Dependensi**: Setiap penambahan pustaka/library di `app/build.gradle.kts` **WAJIB dikonfirmasikan kepada pengguna terlebih dahulu** sebelum dipasang.
+> 2. **Komentar Penjelasan**: Setiap baris dependensi di `build.gradle.kts` wajib memiliki komentar fungsi & nomor poin UTS di atasnya.
+> 3. **Kebijakan Git Push**: Hanya kode yang sudah tuntas (fix), lolos uji kompilasi lokal (`BUILD SUCCESSFUL`), dan berfungsi logikanya yang di-push ke remote branch `farhan-ganteng`.
+
+#### 📦 Daftar Dependensi Tambahan di Gradle (`app/build.gradle.kts`):
+| Nama Dependensi | Versi | Poin UTS | Fungsi & Manfaat untuk Aplikasi |
+|---|:---:|:---:|---|
+| `com.google.zxing:core` | `3.5.3` | #25 QR-Code (2%) | **Generator QR Code offline** untuk tiket pengambilan pesanan roti di kasir toko saat mode Pickup. Bekerja tanpa internet dan tidak membebani server. |
+| `org.osmdroid:osmdroid-android` | `6.1.18` | #22 Maps/OSM (2%) | **Peta Interaktif OpenStreetMap (OSM)** untuk memilih titik alamat pengantaran di Checkout serta menampilkan petunjuk arah ke Outlet Bakery & rute navigasi kurir di Tracking. **100% Gratis tanpa API Key / tanpa Google Billing**. |
 
 ---
 
-#### 📌 FASE 2: Fitur Lanjutan (Kamera, Galeri, Supabase, GPS/Maps, QR Code Scanner)
-- [ ] Integrasi GPS & Google Maps / OpenStreetMaps (Penunjuk lokasi toko & pengantaran)
-- [ ] Integrasi Kamera & Galeri (Upload foto custom cake/bukti)
-- [ ] Upload file ke Supabase Storage
-- [ ] Scanner QR Code untuk scan tiket pesanan
- 
+#### 📌 FASE 2: Fitur Lokasi, Peta, & Hardware (GPS & OSM)
+- [x] **Integrasi GPS Otomatis (Bobot 2% - SELESAI)**:
+  - Menggunakan bawaan Android SDK (`LocationManager` + `Geocoder`), **tanpa menambah library Gradle**.
+  - Deteksi koordinat latitude/longitude pelanggan saat checkout pengantaran dan otomatis mengisi teks alamat rumah.
+- [x] **Integrasi OpenStreetMap / OSM (Bobot 2% - SELESAI)**:
+  - Menggunakan library `osmdroid-android:6.1.18`.
+  - Di Checkout: Dialog peta interaktif untuk memilih titik rumah pelanggan.
+  - Di Tracking: Menampilkan titik lokasi Outlet Erles Bakery (Ambil di Toko) dan simulasi garis rute kurir/Polyline (Diantar Kurir).
+- [-] **Kamera (1%) & Galeri (1%) (DILEWATI SESUAI KESEPAKATAN)**:
+  - Dilewati karena tidak relevan dengan alur pemesanan customer aplikasi toko roti dan membingungkan pengguna.
+
 ---
 
 #### 📌 FASE 3: Integrasi API Laravel (Volley) & Cloud Messaging (FCM)
-- [ ] Penambahan pustaka Volley & ApiClient
+- [ ] Penambahan pustaka Volley & ApiClient (Konfirmasi pengguna terlebih dahulu)
 - [ ] Penggantian mock data ke endpoint Laravel API (`GET /categories`, `GET /products`, `POST /orders`, `GET /orders/track/{code}`)
 - [ ] Firebase Cloud Messaging (FCM) untuk notifikasi status pesanan
 - [ ] Firebase In-App Messaging untuk banner promo
@@ -78,8 +84,9 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
 ---
 
 ### Status Pengerjaan Terkini (Current State)
-* **Tanggal Update**: 2026-10-09
-* **Fase Aktif**: **FASE 1 SELESAI (100% UI Prototype, Local SQLite, Navigation, dan Flow Pesan)**
-* **Langkah Berikutnya yang Siap Dikerjakan**:
-  - FASE 2: Integrasi GPS & Maps (Lokasi Toko & Rute) atau Kamera/Galeri untuk Foto Custom Cake.
+* **Tanggal Update**: 2026-10-10
+* **Fase Aktif**: **FASE 1 SELESAI (100%) & FASE 2 (GPS & OSM) SELESAI (100%)**
+* **Total Poin UTS Terkunci**: **34% Fitur Mobile + 10% Web Backend + 30% Laporan = 74%**
+* **Langkah Berikutnya**:
+  - Konfirmasi ke pengguna sebelum penambahan pustaka **Android Volley** untuk koneksi API MySQL Web Laravel.
 
