@@ -26,4 +26,5 @@
     <color name="status_blue">#2563EB</color>
     <color name="status_blue_light">#DBEAFE</color>
     <color name="status_red">#DC2626</color>
+    <color name="status_red_light">#FEE2E2</color>
 </resources>

@@ -150,8 +150,24 @@ class TrackingFragment : Fragment() {
             binding.btnContactKasirWa.text = "Hubungi Kurir / CS via WhatsApp"
         }
 
-        // Tampilan Badge & Timeline Stepper sesuai metode pengiriman
+        // Jika pesanan sudah dibatalkan, sembunyikan QR Code kasir dan info pengantaran
+        if (order.status.lowercase(Locale.getDefault()) == "dibatalkan") {
+            binding.layoutQrCodeContainer.visibility = View.GONE
+            binding.layoutDeliveryInfoContainer.visibility = View.GONE
+        }
+
+        // Tampilan Badge & Timeline Stepper sesuai status dan metode
         updateStatusViews(order)
+
+        // Tombol Batalkan Pesanan: HANYA muncul jika status masih 'pending' (menunggu konfirmasi toko)
+        if (order.status.lowercase(Locale.getDefault()) == "pending") {
+            binding.btnCancelOrder.visibility = View.VISIBLE
+            binding.btnCancelOrder.setOnClickListener {
+                showCancelOrderConfirmationDialog(order)
+            }
+        } else {
+            binding.btnCancelOrder.visibility = View.GONE
+        }
 
         // Tombol WhatsApp Kasir / Kurir (Implicit Intent)
         binding.btnContactKasirWa.setOnClickListener {
@@ -216,6 +232,24 @@ class TrackingFragment : Fragment() {
                 binding.tvStep3Text.text = if (isPickup) "3. Roti Telah Selesai Diambil di Kasir" else "3. Roti Telah Diterima Pelanggan di Rumah"
                 binding.ivStep3Icon.setImageResource(R.drawable.ic_check_circle)
             }
+            "dibatalkan" -> {
+                val colorRed = ContextCompat.getColor(requireContext(), R.color.status_red)
+                binding.tvTrackDetailStatusBadge.text = "Pesanan Dibatalkan"
+                binding.tvTrackDetailStatusBadge.setBackgroundResource(R.drawable.bg_badge_cancelled)
+                binding.tvTrackDetailStatusBadge.setTextColor(colorRed)
+
+                binding.tvStep1Text.setTextColor(colorRed)
+                binding.tvStep1Text.text = "1. Pesanan Dibatalkan oleh Pelanggan"
+                binding.ivStep1Icon.setImageResource(R.drawable.ic_delete)
+
+                binding.tvStep2Text.setTextColor(colorMuted)
+                binding.tvStep2Text.text = "2. Pemrosesan Roti Dibatalkan Toko"
+                binding.ivStep2Icon.setImageResource(R.drawable.ic_clock)
+
+                binding.tvStep3Text.setTextColor(colorMuted)
+                binding.tvStep3Text.text = "3. Transaksi Tidak Dilanjutkan"
+                binding.ivStep3Icon.setImageResource(R.drawable.ic_bakery_item)
+            }
             else -> { // "pending"
                 binding.tvTrackDetailStatusBadge.text = "Menunggu Konfirmasi"
                 binding.tvTrackDetailStatusBadge.setBackgroundResource(R.drawable.bg_badge_pending)
@@ -241,6 +275,7 @@ class TrackingFragment : Fragment() {
             "pending" -> "diproses"
             "diproses" -> "siap"
             "siap" -> "selesai"
+            "dibatalkan" -> "pending"
             else -> "pending"
         }
 
@@ -269,6 +304,26 @@ class TrackingFragment : Fragment() {
         } catch (_: Exception) {
             Toast.makeText(requireContext(), "Aplikasi WhatsApp tidak terpasang di perangkat", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    // Dialog Konfirmasi Pembatalan Pesanan oleh Pembeli (Hanya saat status masih 'pending')
+    private fun showCancelOrderConfirmationDialog(order: Order) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Batalkan Pesanan?")
+            .setMessage("Apakah Anda yakin ingin membatalkan pesanan ${order.orderCode}?\n\nPembatalan hanya dapat dilakukan saat toko belum mulai memanggang roti.")
+            .setIcon(R.drawable.ic_delete)
+            .setPositiveButton("Ya, Batalkan Pesanan") { _, _ ->
+                cartDbHelper.updateOrderStatus(order.orderCode, "dibatalkan")
+                Toast.makeText(requireContext(), "Pesanan ${order.orderCode} berhasil dibatalkan", Toast.LENGTH_SHORT).show()
+
+                val refreshed = cartDbHelper.getOrderByCode(order.orderCode)
+                if (refreshed != null) {
+                    displayOrderDetail(refreshed)
+                }
+                populateOrderHistoryList(cartDbHelper.getAllOrders())
+            }
+            .setNegativeButton("Kembali", null)
+            .show()
     }
 
     // Mengisi daftar riwayat seluruh pesanan ke dalam container LinearLayout
@@ -306,6 +361,11 @@ class TrackingFragment : Fragment() {
                     itemBinding.tvItemOrderStatus.text = "Selesai"
                     itemBinding.tvItemOrderStatus.setBackgroundResource(R.drawable.bg_badge_success)
                     itemBinding.tvItemOrderStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_green))
+                }
+                "dibatalkan" -> {
+                    itemBinding.tvItemOrderStatus.text = "Dibatalkan"
+                    itemBinding.tvItemOrderStatus.setBackgroundResource(R.drawable.bg_badge_cancelled)
+                    itemBinding.tvItemOrderStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_red))
                 }
                 else -> {
                     itemBinding.tvItemOrderStatus.text = "Pending"
