@@ -29,31 +29,31 @@ Sesuai dengan tabel kriteria penilaian lembar soal UTS PML:
 
 | No. | Nama Fitur | Status | Bobot | Lokasi Implementasi / Keterangan |
 |---|---|:---:|:---:|---|
-| 1 | RadioButton | Dalam Antrean | 1% | Pilihan metode pengiriman (Ambil di Toko / Diantar) di Checkout |
-| 2 | CheckBox | Dalam Antrean | 1% | Opsi tambahan pesanan (Tulisan ucapan, Tambah lilin) di Checkout |
-| 3 | Button | Dalam Antrean | 1% | Tombol navigasi, Tambah ke Keranjang, Checkout, Pesan Sekarang |
-| 4 | EditText | Dalam Antrean | 1% | Input nama pemesan, nomor WhatsApp/telepon, alamat, dan catatan |
-| 5 | AutoCompleteTextView | Dalam Antrean | 1% | Pencarian produk roti secara interaktif di Tab Menu |
-| 6 | DatePickerDialog | Dalam Antrean | 1% | Pemilihan tanggal pengambilan/pengantaran pesanan |
-| 7 | TimePickerDialog | Dalam Antrean | 1% | Pemilihan jam pengambilan/pengantaran pesanan |
-| 8 | Spinner | Dalam Antrean | 1% | Filter kategori roti (Semua, Roti Manis, Cake, Pastry, dll.) |
-| 9 | ListView | Dalam Antrean | 1% | Menampilkan daftar katalog produk roti pada Tab Menu |
-| 10 | OptionsMenu | Dalam Antrean | 1% | Menu aksi pada toolbar (Tentang Aplikasi, Refresh, Bantuan) |
-| 11 | ContextMenu | Dalam Antrean | 1% | Long-press pada item keranjang (Hapus item / Ubah catatan) |
-| 12 | PopupMenu | Dalam Antrean | 1% | Menu opsi filter dan sortir cepat harga produk |
-| 13 | BottomNavigationView | Dalam Antrean | 1% | Navigasi menu utama: Menu Katalog, Keranjang, dan Lacak Pesanan |
-| 14 | FrameLayout | Dalam Antrean | 1% | Container untuk pergantian Fragment navigasi utama |
-| 15 | Fragment | Dalam Antrean | 1% | MenuFragment, CartFragment, TrackingFragment |
-| 16 | Activity | Siap (Setup) | 1% | MainActivity, ProductDetailActivity, CheckoutActivity, SuccessActivity |
-| 17 | Database Sqlite | Dalam Antrean | 1% | Penyimpanan keranjang belanja (cart_items) & riwayat lokal |
+| 1 | RadioButton | ✅ Selesai | 1% | Pilihan metode pengiriman (Ambil di Toko / Diantar) di CheckoutActivity |
+| 2 | CheckBox | ✅ Selesai | 1% | Opsi tambahan pesanan (Kartu Ucapan, Lilin, Pisau Kue) di CheckoutActivity |
+| 3 | Button | ✅ Selesai | 1% | Tombol navigasi, Tambah Keranjang, Checkout, Lacak, WhatsApp CS |
+| 4 | EditText | ✅ Selesai | 1% | Input nama, WA, alamat, catatan roti, dan pencarian kode pesanan |
+| 5 | AutoCompleteTextView | ✅ Selesai | 1% | Pencarian interaktif katalog roti di MenuFragment |
+| 6 | DatePickerDialog | ✅ Selesai | 1% | Pemilihan tanggal pengambilan pesanan di CheckoutActivity |
+| 7 | TimePickerDialog | ✅ Selesai | 1% | Pemilihan jam pengambilan pesanan di CheckoutActivity |
+| 8 | Spinner | ✅ Selesai | 1% | Filter kategori roti (Semua, Roti Manis, Cake, Pastry) di MenuFragment |
+| 9 | ListView | ✅ Selesai | 1% | Menampilkan daftar katalog roti & keranjang belanja |
+| 10 | OptionsMenu | ✅ Selesai | 1% | Menu aksi toolbar (Tentang Aplikasi, Refresh, Bantuan, WhatsApp CS) |
+| 11 | ContextMenu | ✅ Selesai | 1% | Long-press pada item keranjang belanja (Hapus item / Tambah catatan) |
+| 12 | PopupMenu | ✅ Selesai | 1% | Menu sortir harga termurah / termahal di MenuFragment |
+| 13 | BottomNavigationView | ✅ Selesai | 1% | Navigasi menu utama: Menu Katalog, Keranjang, Lacak + Real-time Badge |
+| 14 | FrameLayout | ✅ Selesai | 1% | Container untuk pergantian Fragment di MainActivity |
+| 15 | Fragment | ✅ Selesai | 1% | MenuFragment, CartFragment, TrackingFragment |
+| 16 | Activity | ✅ Selesai | 1% | MainActivity, ProductDetailActivity, CheckoutActivity |
+| 17 | Database Sqlite | ✅ Selesai | 1% | CartDatabaseHelper: cart_items & orders_history offline |
 | 18 | Database MySQL & Web Service/API | Dalam Antrean | 2% | Terintegrasi dengan API Laravel Erles Bakery ERP |
 | 19 | Pustaka Volley | Dalam Antrean | 1% | Konsumsi HTTP REST API backend Laravel (JSON Request & Response) |
 | 20 | Kamera | Dalam Antrean | 1% | Pengambilan foto referensi custom cake / bukti pembayaran |
 | 21 | GPS | Dalam Antrean | 2% | Deteksi koordinat lokasi pelanggan untuk pengantaran pesanan |
 | 22 | Google Maps / OpenStreetMaps | Dalam Antrean | 2% | Tampilan peta penjemputan/pengantaran & rute ke toko roti |
-| 23 | SharedPreferences | Dalam Antrean | 1% | Menyimpan preferensi nama, nomor HP, dan riwayat terakhir pemesan |
+| 23 | SharedPreferences | ✅ Selesai | 1% | Menyimpan otomatis Nama & No. WA pelanggan di CheckoutActivity |
 | 24 | Audio/Video | - | 1% | *(Dilewati sesuai kesepakatan fitur fokus bakery)* |
-| 25 | QR-Code | Dalam Antrean | 2% | Scanner QR Code nota/tiket pengambilan pesanan di outlet |
+| 25 | QR-Code | ✅ Selesai | 2% | Generator QR-Code tiket pengambilan kasir (ZXing) di TrackingFragment |
 | 26 | Gallery | Dalam Antrean | 1% | Pilih gambar dari galeri HP untuk lampiran pesanan custom |
 | 27 | Aplikasi Web (DB Terintegrasi Mobile) | Siap (PTT) | 10% | Backend Web ERP Laravel Erles Bakery |
 | 28 | Aplikasi IoT | - | 10% | *(Dilewati - fokus pada aplikasi pemesanan e-commerce)* |
