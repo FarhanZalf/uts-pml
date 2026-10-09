@@ -14,14 +14,14 @@
         android:paddingStart="16dp"
         android:paddingTop="12dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="24dp">
+        android:paddingBottom="28dp">
 
         <!-- Header Layar -->
         <TextView
             android:id="@+id/tvTrackTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Lacak &amp; Riwayat Pesanan"
+            android:text="Status &amp; Lacak Pesanan"
             android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -31,77 +31,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="Pantau progres pesanan roti &amp; tiket QR kasir"
+            android:text="Pantau progres pembuatan roti Anda secara langsung"
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
-        <!-- KARTU 1: FORM PENCARIAN KODE PESANAN (Poin Dosen: EditText & Button) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:background="@drawable/bg_product_card"
-            android:orientation="vertical"
-            android:padding="14dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Lacak dengan Kode Pesanan"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/etSearchOrderCode"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_search_bar"
-                    android:hint="Contoh: ORD-20261009-0001"
-                    android:inputType="textCapCharacters"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_muted"
-                    android:textSize="13sp" />
-
-                <Button
-                    android:id="@+id/btnSearchOrder"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/bg_button_primary"
-                    android:minWidth="80dp"
-                    android:text="Lacak"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/btnQuickLatestOrder"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:paddingStart="0dp"
-                android:paddingEnd="0dp"
-                android:text="⏱ Gunakan pesanan terakhir saya"
-                android:textColor="@color/primary_caramel"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <!-- KARTU 2: DETAIL TRACKING & TIKET QR (Dinamis Muncul saat Ada Pesanan) -->
+        <!-- KARTU UTAMA: PESANAN AKTIF ANDA (Otomatis Muncul Teratas) -->
         <LinearLayout
             android:id="@+id/cardTrackingDetail"
             android:layout_width="match_parent"
@@ -112,35 +46,56 @@
             android:padding="16dp"
             android:visibility="gone">
 
-            <!-- Header Kartu Tracking: Kode & Badge Status -->
+            <!-- Baris Header Kartu: Label & Metode Pengiriman -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/tvTrackSectionHeader"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:text="PESANAN AKTIF ANDA"
+                    android:textColor="@color/primary_caramel"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Tiket Pesanan Resmi"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="11sp" />
+                <!-- Badge Metode Pengiriman (Ambil di Toko vs Diantar) -->
+                <TextView
+                    android:id="@+id/tvTrackDeliveryMethod"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_category"
+                    android:paddingStart="8dp"
+                    android:paddingTop="3dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="3dp"
+                    android:text="Ambil di Toko"
+                    android:textColor="@color/primary_dark"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tvTrackDetailCode"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ORD-20261009-0001"
-                        android:textColor="@color/primary_dark"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+            <!-- Kode Pesanan & Badge Status -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvTrackDetailCode"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ORD-20261009-0001"
+                    android:textColor="@color/primary_dark"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvTrackDetailStatusBadge"
@@ -181,7 +136,7 @@
                 android:orientation="vertical"
                 android:padding="12dp">
 
-                <!-- Step 1: Pending -->
+                <!-- Step 1: Pesanan Diterima -->
                 <LinearLayout
                     android:id="@+id/stepPending"
                     android:layout_width="match_parent"
@@ -200,13 +155,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="1. Pesanan Diterima (Menunggu Konfirmasi)"
+                        android:text="1. Pesanan Diterima Toko"
                         android:textColor="@color/text_primary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- Step 2: Diproses -->
+                <!-- Step 2: Sedang Dipanggang -->
                 <LinearLayout
                     android:id="@+id/stepProcess"
                     android:layout_width="match_parent"
@@ -226,12 +181,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="2. Roti Sedang Dipanggang di Dapur"
+                        android:text="2. Roti Sedang Dipanggang &amp; Dikemas"
                         android:textColor="@color/text_muted"
                         android:textSize="12sp" />
                 </LinearLayout>
 
-                <!-- Step 3: Siap / Selesai -->
+                <!-- Step 3: Siap Diambil / Diantar (Dinamis Berdasarkan Metode) -->
                 <LinearLayout
                     android:id="@+id/stepCompleted"
                     android:layout_width="match_parent"
@@ -251,7 +206,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="3. Roti Siap Diambil / Diantar ke Alamat"
+                        android:text="3. Roti Siap Diambil di Outlet Toko"
                         android:textColor="@color/text_muted"
                         android:textSize="12sp" />
                 </LinearLayout>
@@ -286,7 +241,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Jadwal Ambil: Jumat, 9 Oktober 2026 (10:00 WIB)"
+                    android:text="Jadwal: Jumat, 9 Oktober 2026 (10:00 WIB)"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
@@ -318,8 +273,9 @@
                 android:layout_marginBottom="12dp"
                 android:background="@color/border_soft" />
 
-            <!-- FITUR QR CODE TIKET (Poin Penilaian Dosen #25 - QR-Code 2%) -->
+            <!-- SEKSI KHUSUS PICKUP: QR CODE TIKET KASIR (Poin Penilaian Dosen #25) -->
             <LinearLayout
+                android:id="@+id/layoutQrCodeContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
@@ -328,7 +284,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="QR-CODE TIKET PENGAMBILAN"
+                    android:text="TIKET QR CODE PENGAMBILAN KASIR"
                     android:textColor="@color/primary_dark"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -346,48 +302,160 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Tunjukkan kode QR ini ke kasir Erles Bakery"
+                    android:text="Tunjukkan QR ini ke kasir outlet Erles Bakery saat pengambilan roti."
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>
 
-            <!-- TOMBOL AKSI: WHATSAPP KASIR & SIMULASI STATUS UNTUK DEMO -->
+            <!-- SEKSI KHUSUS DELIVERY: INFORMASI PENGANTARAN KURIR -->
             <LinearLayout
+                android:id="@+id/layoutDeliveryInfoContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:orientation="horizontal">
+                android:background="@drawable/bg_badge_process"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:visibility="gone">
 
-                <Button
-                    android:id="@+id/btnContactKasirWa"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_button_primary"
-                    android:drawableStart="@drawable/ic_whatsapp"
-                    android:drawablePadding="6dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"
-                    android:text="WhatsApp Kasir"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛵 PENGANTARAN OLEH KURIR TOKO"
+                    android:textColor="@color/status_blue"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
-                <Button
-                    android:id="@+id/btnSimulateNextStatus"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                <TextView
+                    android:id="@+id/tvDeliveryHomeAddress"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
-                    android:layout_marginStart="8dp"
-                    android:text="Ubah Status (Demo)"
-                    android:textAllCaps="false"
-                    android:textColor="@color/primary_dark"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Alamat Tujuan: Perumahan Indah Blok C No. 12 Kediri"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Roti akan diantar langsung oleh kurir ke alamat Anda sesuai jam pesanan. Mohon pastikan nomor WhatsApp Anda aktif."
+                    android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- TOMBOL AKSI: HUBUNGI VIA WHATSAPP -->
+            <Button
+                android:id="@+id/btnContactKasirWa"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_button_primary"
+                android:drawableStart="@drawable/ic_whatsapp"
+                android:drawablePadding="8dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="Hubungi Kasir via WhatsApp"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- KARTU 2: PANEL PENGUJIAN DOSEN (SIMULASI KASIR) -->
+        <LinearLayout
+            android:id="@+id/panelDemoTesting"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_badge_category"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🧪 Panel Pengujian Dosen (Simulasi Status)"
+                android:textColor="@color/primary_dark"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Gunakan tombol ini saat presentasi demo UTS untuk mensimulasikan perubahan status dari dapur/kasir (Pending ➔ Diproses ➔ Siap/Diantar ➔ Selesai)."
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/btnSimulateNextStatus"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:layout_marginTop="8dp"
+                android:text="Simulasi Update Status Kasir/Dapur (Demo)"
+                android:textAllCaps="false"
+                android:textColor="@color/primary_dark"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- KARTU 3: CARI BERDASARKAN KODE PESANAN TERTENTU (SEKUNDER) -->
+        <LinearLayout
+            android:id="@+id/cardSearchOrder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_product_card"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lacak Kode Pesanan Lain"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/etSearchOrderCode"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_search_bar"
+                    android:hint="Ketik kode (cth: ORD-...)"
+                    android:inputType="textCapCharacters"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_muted"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:id="@+id/btnSearchOrder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_button_primary"
+                    android:minWidth="80dp"
+                    android:text="Cari"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- KARTU 3: DAFTAR SEMUA RIWAYAT PESANAN (SQLite orders_history) -->
+        <!-- KARTU 4: DAFTAR SEMUA RIWAYAT PESANAN (SQLite orders_history) -->
         <TextView
             android:id="@+id/tvHistoryHeaderTitle"
             android:layout_width="wrap_content"
@@ -446,7 +514,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:gravity="center"
-                android:text="Pesanan yang Anda buat melalui keranjang belanja akan otomatis tercatat di sini."
+                android:text="Pesanan yang Anda buat melalui keranjang belanja akan otomatis muncul dan dapat dilacak di sini."
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
         </LinearLayout>

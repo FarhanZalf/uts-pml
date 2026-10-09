@@ -50,7 +50,7 @@ class TrackingFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        // Tombol Lacak berdasarkan input teks kode
+        // Tombol Cari Kode Pesanan Lain
         binding.btnSearchOrder.setOnClickListener {
             val codeInput = binding.etSearchOrderCode.text.toString().trim()
             if (codeInput.isEmpty()) {
@@ -61,22 +61,10 @@ class TrackingFragment : Fragment() {
             val foundOrder = cartDbHelper.getOrderByCode(codeInput)
             if (foundOrder != null) {
                 displayOrderDetail(foundOrder)
-                // Scroll halus ke kartu detail
                 binding.scrollTrack.smoothScrollTo(0, binding.cardTrackingDetail.top)
+                Toast.makeText(requireContext(), "Memuat data pesanan: ${foundOrder.orderCode}", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(requireContext(), "Pesanan '$codeInput' tidak ditemukan di riwayat lokal", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        // Tombol Cepat: Gunakan Pesanan Terakhir
-        binding.btnQuickLatestOrder.setOnClickListener {
-            val latest = cartDbHelper.getLatestOrder()
-            if (latest != null) {
-                binding.etSearchOrderCode.setText(latest.orderCode)
-                displayOrderDetail(latest)
-                binding.scrollTrack.smoothScrollTo(0, binding.cardTrackingDetail.top)
-            } else {
-                Toast.makeText(requireContext(), "Belum ada pesanan yang tercatat", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Pesanan '$codeInput' tidak ditemukan", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -85,27 +73,39 @@ class TrackingFragment : Fragment() {
         val orders = cartDbHelper.getAllOrders()
         populateOrderHistoryList(orders)
 
-        // Jika kartu tracking belum pernah menampilkan pesanan, muat pesanan terakhir
-        if (currentDisplayedOrder == null && orders.isNotEmpty()) {
-            displayOrderDetail(orders.first())
-        } else if (currentDisplayedOrder != null) {
-            // Segarkan status pesanan yang sedang ditampilkan dari database
-            val refreshed = cartDbHelper.getOrderByCode(currentDisplayedOrder!!.orderCode)
-            if (refreshed != null) {
-                displayOrderDetail(refreshed)
+        if (orders.isEmpty()) {
+            binding.cardTrackingDetail.visibility = View.GONE
+            binding.panelDemoTesting.visibility = View.GONE
+            binding.cardSearchOrder.visibility = View.GONE
+            binding.layoutHistoryEmpty.visibility = View.VISIBLE
+        } else {
+            binding.layoutHistoryEmpty.visibility = View.GONE
+            binding.cardSearchOrder.visibility = View.VISIBLE
+            binding.panelDemoTesting.visibility = View.VISIBLE
+
+            // Otomatis menampilkan pesanan paling baru jika belum ada yang dipilih
+            if (currentDisplayedOrder == null) {
+                displayOrderDetail(orders.first())
+            } else {
+                val refreshed = cartDbHelper.getOrderByCode(currentDisplayedOrder!!.orderCode)
+                if (refreshed != null) {
+                    displayOrderDetail(refreshed)
+                } else {
+                    displayOrderDetail(orders.first())
+                }
             }
         }
     }
 
-    // Menampilkan detail order, tahapan status timeline, dan QR-Code tiket
+    // Menampilkan detail order, tahapan status timeline, dan diferensiasi Pickup vs Delivery
     private fun displayOrderDetail(order: Order) {
         currentDisplayedOrder = order
         binding.cardTrackingDetail.visibility = View.VISIBLE
+        binding.panelDemoTesting.visibility = View.VISIBLE
 
         binding.tvTrackDetailCode.text = order.orderCode
         binding.tvTrackDetailCustomer.text = "Pemesan: ${order.customerName} (${order.customerPhone})"
-        binding.tvTrackDetailAddress.text = "Alamat/Lokasi: ${order.address}"
-        binding.tvTrackDetailDate.text = "Jadwal Pengambilan: ${order.pickupDate}"
+        binding.tvTrackDetailDate.text = "Jadwal: ${order.pickupDate}"
         binding.tvTrackDetailTotal.text = "Total Pembayaran: ${formatRupiah(order.totalPrice)}"
 
         if (order.notes.isNotEmpty()) {
@@ -115,28 +115,55 @@ class TrackingFragment : Fragment() {
             binding.tvTrackDetailNotes.visibility = View.GONE
         }
 
-        // Tampilan Badge & Timeline Stepper
-        updateStatusViews(order.status)
+        // DIFERENSIASI METODE PENGIRIMAN: Ambil di Toko (Pickup) vs Diantar Kurir (Delivery)
+        if (order.isPickup) {
+            // Mode Ambil Sendiri di Toko
+            binding.tvTrackDeliveryMethod.text = "🏪 Ambil di Toko"
+            binding.tvTrackDeliveryMethod.setBackgroundResource(R.drawable.bg_badge_category)
+            binding.tvTrackDeliveryMethod.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_dark))
+            binding.tvTrackDetailAddress.text = "Lokasi Pengambilan: Outlet Erles Bakery (Jl. Mayor Bismo No. 27 Kediri)"
 
-        // Generate QR Code Tiket Pengambilan (Poin Penilaian Dosen #25 - QR Code 2%)
-        val qrBitmap = QRCodeUtil.generateQRCode(order.orderCode, 450)
-        if (qrBitmap != null) {
-            binding.ivOrderQrCode.setImageBitmap(qrBitmap)
+            // Tampilkan QR Code untuk kasir toko
+            binding.layoutQrCodeContainer.visibility = View.VISIBLE
+            binding.layoutDeliveryInfoContainer.visibility = View.GONE
+
+            val qrBitmap = QRCodeUtil.generateQRCode(order.orderCode, 450)
+            if (qrBitmap != null) {
+                binding.ivOrderQrCode.setImageBitmap(qrBitmap)
+            }
+
+            binding.btnContactKasirWa.text = "Hubungi Kasir Toko via WhatsApp"
+        } else {
+            // Mode Diantar Kurir
+            binding.tvTrackDeliveryMethod.text = "🛵 Diantar Kurir"
+            binding.tvTrackDeliveryMethod.setBackgroundResource(R.drawable.bg_badge_process)
+            binding.tvTrackDeliveryMethod.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_blue))
+            binding.tvTrackDetailAddress.text = "Alamat Pengantaran: ${order.address}"
+
+            // Sembunyikan QR Code tiket kasir (tidak relevan untuk kurir), tampilkan info pengantaran
+            binding.layoutQrCodeContainer.visibility = View.GONE
+            binding.layoutDeliveryInfoContainer.visibility = View.VISIBLE
+            binding.tvDeliveryHomeAddress.text = "Alamat Tujuan: ${order.address}"
+
+            binding.btnContactKasirWa.text = "Hubungi Kurir / CS via WhatsApp"
         }
 
-        // Tombol WhatsApp Kasir (Implicit Intent)
+        // Tampilan Badge & Timeline Stepper sesuai metode pengiriman
+        updateStatusViews(order)
+
+        // Tombol WhatsApp Kasir / Kurir (Implicit Intent)
         binding.btnContactKasirWa.setOnClickListener {
-            openWhatsAppKasir(order)
+            openWhatsAppChat(order)
         }
 
-        // Tombol Demo: Simulasi Perubahan Status untuk Presentasi Dosen
+        // Tombol Khusus Pengujian Dosen: Simulasi Update Status Kasir
         binding.btnSimulateNextStatus.setOnClickListener {
             simulateNextStatus(order)
         }
     }
 
-    private fun updateStatusViews(status: String) {
-        val statusClean = status.lowercase(Locale.getDefault())
+    private fun updateStatusViews(order: Order) {
+        val statusClean = order.status.lowercase(Locale.getDefault())
 
         val colorAmber = ContextCompat.getColor(requireContext(), R.color.status_amber)
         val colorBlue = ContextCompat.getColor(requireContext(), R.color.status_blue)
@@ -144,9 +171,11 @@ class TrackingFragment : Fragment() {
         val colorMuted = ContextCompat.getColor(requireContext(), R.color.text_muted)
         val colorPrimary = ContextCompat.getColor(requireContext(), R.color.text_primary)
 
+        val isPickup = order.isPickup
+
         when (statusClean) {
             "diproses" -> {
-                binding.tvTrackDetailStatusBadge.text = "Sedang Diproses Toko"
+                binding.tvTrackDetailStatusBadge.text = "Sedang Diproses Dapur"
                 binding.tvTrackDetailStatusBadge.setBackgroundResource(R.drawable.bg_badge_process)
                 binding.tvTrackDetailStatusBadge.setTextColor(colorBlue)
 
@@ -154,23 +183,23 @@ class TrackingFragment : Fragment() {
                 binding.tvStep1Text.setTextColor(colorMuted)
                 // Step 2: Aktif
                 binding.tvStep2Text.setTextColor(colorPrimary)
-                binding.tvStep2Text.text = "2. Roti Sedang Dipanggang di Dapur (AKTIF)"
+                binding.tvStep2Text.text = "2. Roti Sedang Dipanggang & Dikemas (AKTIF)"
                 binding.ivStep2Icon.setImageResource(R.drawable.ic_check_circle)
                 // Step 3: Belum
                 binding.tvStep3Text.setTextColor(colorMuted)
-                binding.tvStep3Text.text = "3. Roti Siap Diambil / Diantar ke Alamat"
+                binding.tvStep3Text.text = if (isPickup) "3. Roti Siap Diambil di Outlet Toko" else "3. Kurir Sedang Menuju Alamat Anda"
                 binding.ivStep3Icon.setImageResource(R.drawable.ic_bakery_item)
             }
             "siap" -> {
-                binding.tvTrackDetailStatusBadge.text = "Siap Diambil di Outlet"
+                binding.tvTrackDetailStatusBadge.text = if (isPickup) "Siap Diambil di Outlet" else "Kurir Sedang Mengantar"
                 binding.tvTrackDetailStatusBadge.setBackgroundResource(R.drawable.bg_badge_success)
                 binding.tvTrackDetailStatusBadge.setTextColor(colorGreen)
 
                 binding.tvStep1Text.setTextColor(colorMuted)
                 binding.tvStep2Text.setTextColor(colorMuted)
-                binding.tvStep2Text.text = "2. Roti Telah Selesai Dipanggang"
+                binding.tvStep2Text.text = "2. Roti Telah Selesai Dipanggang & Dikemas"
                 binding.tvStep3Text.setTextColor(colorPrimary)
-                binding.tvStep3Text.text = "3. Roti Siap Diambil di Outlet (AKTIF)"
+                binding.tvStep3Text.text = if (isPickup) "3. Roti Siap Diambil di Outlet Toko (AKTIF)" else "3. Kurir Sedang Menuju Alamat Anda (AKTIF)"
                 binding.ivStep3Icon.setImageResource(R.drawable.ic_check_circle)
             }
             "selesai" -> {
@@ -180,9 +209,9 @@ class TrackingFragment : Fragment() {
 
                 binding.tvStep1Text.setTextColor(colorMuted)
                 binding.tvStep2Text.setTextColor(colorMuted)
-                binding.tvStep2Text.text = "2. Roti Telah Selesai Dipanggang"
+                binding.tvStep2Text.text = "2. Roti Telah Selesai Dipanggang & Dikemas"
                 binding.tvStep3Text.setTextColor(colorGreen)
-                binding.tvStep3Text.text = "3. Roti Telah Diambil / Selesai Diterima"
+                binding.tvStep3Text.text = if (isPickup) "3. Roti Telah Selesai Diambil di Kasir" else "3. Roti Telah Diterima Pelanggan di Rumah"
                 binding.ivStep3Icon.setImageResource(R.drawable.ic_check_circle)
             }
             else -> { // "pending"
@@ -191,15 +220,15 @@ class TrackingFragment : Fragment() {
                 binding.tvTrackDetailStatusBadge.setTextColor(colorAmber)
 
                 binding.tvStep1Text.setTextColor(colorPrimary)
-                binding.tvStep1Text.text = "1. Pesanan Diterima (Menunggu Konfirmasi)"
+                binding.tvStep1Text.text = "1. Pesanan Diterima Toko (Menunggu Konfirmasi)"
                 binding.ivStep1Icon.setImageResource(R.drawable.ic_check_circle)
 
                 binding.tvStep2Text.setTextColor(colorMuted)
-                binding.tvStep2Text.text = "2. Roti Sedang Dipanggang di Dapur"
+                binding.tvStep2Text.text = "2. Roti Sedang Dipanggang & Dikemas"
                 binding.ivStep2Icon.setImageResource(R.drawable.ic_clock)
 
                 binding.tvStep3Text.setTextColor(colorMuted)
-                binding.tvStep3Text.text = "3. Roti Siap Diambil / Diantar ke Alamat"
+                binding.tvStep3Text.text = if (isPickup) "3. Roti Siap Diambil di Outlet Toko" else "3. Kurir Sedang Menuju Alamat Anda"
                 binding.ivStep3Icon.setImageResource(R.drawable.ic_bakery_item)
             }
         }
@@ -214,7 +243,7 @@ class TrackingFragment : Fragment() {
         }
 
         cartDbHelper.updateOrderStatus(order.orderCode, nextStatus)
-        Toast.makeText(requireContext(), "Status diperbarui ke: $nextStatus (Demo)", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), "Status diubah ke: $nextStatus (Simulasi Dosen)", Toast.LENGTH_SHORT).show()
 
         val updatedOrder = cartDbHelper.getOrderByCode(order.orderCode)
         if (updatedOrder != null) {
@@ -223,8 +252,13 @@ class TrackingFragment : Fragment() {
         }
     }
 
-    private fun openWhatsAppKasir(order: Order) {
-        val message = "Halo Kasir Erles Bakery, saya ingin konfirmasi pesanan saya dengan kode ${order.orderCode} atas nama ${order.customerName}."
+    private fun openWhatsAppChat(order: Order) {
+        val message = if (order.isPickup) {
+            "Halo Kasir Erles Bakery, saya ingin konfirmasi pesanan Ambil di Toko dengan kode ${order.orderCode} atas nama ${order.customerName}."
+        } else {
+            "Halo Kurir/CS Erles Bakery, saya ingin menanyakan jadwal pengantaran pesanan dengan kode ${order.orderCode} ke alamat ${order.address}."
+        }
+
         try {
             val encodedMsg = URLEncoder.encode(message, "UTF-8")
             val uri = Uri.parse("https://api.whatsapp.com/send?phone=6281234567890&text=$encodedMsg")
@@ -240,12 +274,10 @@ class TrackingFragment : Fragment() {
         binding.layoutOrdersList.removeAllViews()
 
         if (orders.isEmpty()) {
-            binding.layoutHistoryEmpty.visibility = View.VISIBLE
             binding.tvHistoryHeaderCount.text = "Belum ada pesanan yang tersimpan."
             return
         }
 
-        binding.layoutHistoryEmpty.visibility = View.GONE
         binding.tvHistoryHeaderCount.text = "${orders.size} pesanan tercatat di perangkat ini"
 
         val inflater = LayoutInflater.from(requireContext())
@@ -253,7 +285,7 @@ class TrackingFragment : Fragment() {
             val itemBinding = ItemOrderBinding.inflate(inflater, binding.layoutOrdersList, false)
 
             itemBinding.tvItemOrderCode.text = order.orderCode
-            itemBinding.tvItemOrderCustomer.text = "Pemesan: ${order.customerName}"
+            itemBinding.tvItemOrderCustomer.text = "Pemesan: ${order.customerName} • ${if (order.isPickup) "Ambil di Toko" else "Diantar Kurir"}"
             itemBinding.tvItemOrderDate.text = "Jadwal: ${order.pickupDate}"
             itemBinding.tvItemOrderTotal.text = formatRupiah(order.totalPrice)
 
@@ -263,8 +295,13 @@ class TrackingFragment : Fragment() {
                     itemBinding.tvItemOrderStatus.setBackgroundResource(R.drawable.bg_badge_process)
                     itemBinding.tvItemOrderStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_blue))
                 }
-                "siap", "selesai" -> {
-                    itemBinding.tvItemOrderStatus.text = if (order.status.equals("selesai", ignoreCase = true)) "Selesai" else "Siap Diambil"
+                "siap" -> {
+                    itemBinding.tvItemOrderStatus.text = if (order.isPickup) "Siap Diambil" else "Diantar Kurir"
+                    itemBinding.tvItemOrderStatus.setBackgroundResource(R.drawable.bg_badge_success)
+                    itemBinding.tvItemOrderStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_green))
+                }
+                "selesai" -> {
+                    itemBinding.tvItemOrderStatus.text = "Selesai"
                     itemBinding.tvItemOrderStatus.setBackgroundResource(R.drawable.bg_badge_success)
                     itemBinding.tvItemOrderStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_green))
                 }

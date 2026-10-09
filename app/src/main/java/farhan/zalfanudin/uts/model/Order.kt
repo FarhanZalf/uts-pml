@@ -11,4 +11,7 @@ data class Order(
     val totalPrice: Double,
     val status: String = "pending",
     val createdAt: String
-)
+) {
+    val isPickup: Boolean
+        get() = address.startsWith("Outlet Erles Bakery", ignoreCase = true)
+}

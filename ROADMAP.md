@@ -35,14 +35,15 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
   - `TimePickerDialog`: Pemilihan jam pengambilan
   - `CheckBox`: Opsi tambahan (Tambahkan Kartu Ucapan, Tambahkan Lilin Ulang Tahun)
   - Penyimpanan ke database SQLite lokal (`orders_history`) dengan format kanonikal `ORD-{YYYYMMDD}-{XXXX}`
-- [x] **Langkah 1.8**: Tab 3 Lacak & Riwayat Pesanan (`TrackingFragment`) & OptionsMenu (SELESAI):
-  - Form pencarian kode pesanan (`EditText` + `Button` Lacak) & tombol cepat pesanan terakhir
-  - Visual status stepper: Pending ➔ Diproses ➔ Siap Diambil ➔ Selesai
-  - Tombol demo ubah status pesanan secara dinamis
-  - Generator **QR-Code** tiket pengambilan kasir (ZXing Core)
-  - Daftar riwayat seluruh pesanan dari SQLite `orders_history`
-  - Tombol WhatsApp Customer Service / Kasir (Implicit Intent)
-  - `OptionsMenu` di Toolbar utama (Tentang Toko, Panduan, Hubungi WA, Refresh)
+- [x] **Langkah 1.8**: Tab 3 Lacak & Riwayat Pesanan (`TrackingFragment`) & OptionsMenu (SELESAI - REFINING UX):
+  - **Otomatis Muat Pesanan Aktif**: Pelanggan langsung melihat pesanan berjalan tanpa perlu mengetik ulang kode pesanan.
+  - **Diferensiasi Alur Pickup vs Delivery**:
+    - **Ambil di Toko (Pickup)**: Tahap "Siap Diambil di Outlet" + **QR-Code Tiket Kasir** resmi.
+    - **Diantar Kurir (Delivery)**: Tahap "Kurir Sedang Menuju Alamat" + rute & info alamat rumah + kontak kurir WA (QR-Code kasir disembunyikan).
+  - **Panel Simulasi Dosen**: Tombol ubah status dibungkus khusus dalam panel `[Mode Pengujian Dosen: Simulasi Kasir]` agar terpisah jelas dari fitur customer.
+  - Form pencarian kode pesanan sekunder (opsional jika ingin mengecek nomor nota lain).
+  - Daftar riwayat seluruh pesanan dari SQLite `orders_history`.
+  - `OptionsMenu` di Toolbar utama (Tentang Toko, Panduan, Hubungi WA, Refresh).
 
 ---
 
@@ -51,13 +52,18 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
 - [ ] **Fitur Login & Register Akun Pelanggan (Authentication)**:
   - **Status**: Disimpan sebagai revisi lanjutan.
   - **Catatan**: Saat ini alur menggunakan *Guest Checkout* (nama & nomor WhatsApp disimpan via `SharedPreferences`) agar tidak terhambat oleh database backend teman. Begitu teman selesai merapikan backend/database dan menyediakan endpoint Auth (atau jika ingin mengaktifkan poin Firebase Auth 6%), fitur login/register akan dipasang sebelum checkout.
+- [ ] **Integrasi GPS & OpenStreetMap (OSM) di Alamat Pengantaran**:
+  - **Status**: Siap dikerjakan di FASE 2.
+  - **Catatan Alur**: 
+    1. Di layar Checkout (`CheckoutActivity`), saat memilih "Diantar ke Rumah", tombol GPS mendeteksi koordinat latitude/longitude pelanggan dan picker peta OSM memilih titik rumah.
+    2. Di layar Lacak (`TrackingFragment`), pesanan mode Delivery menampilkan peta rute dari Toko Erles Bakery (Jl. Mayor Bismo Kediri) ke titik rumah pelanggan.
 
 ---
 
 #### 📌 FASE 2: Fitur Lanjutan (Kamera, Galeri, Supabase, GPS/Maps, QR Code Scanner)
+- [ ] Integrasi GPS & Google Maps / OpenStreetMaps (Penunjuk lokasi toko & pengantaran)
 - [ ] Integrasi Kamera & Galeri (Upload foto custom cake/bukti)
 - [ ] Upload file ke Supabase Storage
-- [ ] Integrasi GPS & Google Maps / OpenStreetMaps (Penunjuk lokasi toko & pengantaran)
 - [ ] Scanner QR Code untuk scan tiket pesanan
  
 ---
