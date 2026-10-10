@@ -48,6 +48,7 @@ class CheckoutActivity : AppCompatActivity() {
     private var grandTotal: Double = 0.0
 
     private var selectedDateStr: String = ""
+    private var selectedDateIso: String = ""
     private var selectedTimeStr: String = ""
 
     companion object {
@@ -284,6 +285,7 @@ class CheckoutActivity : AppCompatActivity() {
                     }
                     val sdf = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.forLanguageTag("id-ID"))
                     selectedDateStr = sdf.format(chosenCal.time)
+                    selectedDateIso = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(chosenCal.time)
                     binding.tvSelectedDate.text = selectedDateStr
                 },
                 year, month, day
@@ -338,7 +340,7 @@ class CheckoutActivity : AppCompatActivity() {
         binding.tvCheckoutGrandTotal.text = formatRupiah(grandTotal)
     }
 
-    // 6. Validasi & Submit Pemesanan
+    // 6. Validasi & Submit Pemesanan (Poin UTS #18: API & #19: Volley)
     private fun setupSubmitButton() {
         binding.btnSubmitOrder.setOnClickListener {
             val name = binding.etCustomerName.text.toString().trim()
@@ -369,36 +371,89 @@ class CheckoutActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            val cartItems = cartDbHelper.getAllCartItems()
+            if (cartItems.isEmpty()) {
+                Toast.makeText(this, "Keranjang belanja kosong", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             // Simpan Nama & Nomor HP ke SharedPreferences
             sharedPreferences.edit()
                 .putString(KEY_NAME, name)
                 .putString(KEY_PHONE, phone)
                 .apply()
 
-            // Buat Kode Pesanan Resmi Kanonikal: ORD-{YYYYMMDD}-{XXXX}
-            val dateCode = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Calendar.getInstance().time)
-            val randomSeq = String.format(Locale.getDefault(), "%04d", (1..9999).random())
-            val orderCode = "ORD-$dateCode-$randomSeq"
-
             val notes = binding.etOrderNotes.text.toString().trim()
-            val newOrder = farhan.zalfanudin.uts.model.Order(
-                orderCode = orderCode,
+            val finalAddress = if (binding.rbPickup.isChecked) "Outlet Erles Bakery - Jl. Mayor Bismo No. 27 Kediri" else address
+            val isoDate = if (selectedDateIso.isNotEmpty()) selectedDateIso else SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().time)
+
+            binding.btnSubmitOrder.isEnabled = false
+            binding.btnSubmitOrder.text = "Mengirim Pesanan..."
+
+            // Kirim ke REST API Backend Laravel Erles Bakery ERP via Volley
+            farhan.zalfanudin.uts.network.ApiService.submitOrder(
+                context = this,
                 customerName = name,
                 customerPhone = phone,
-                address = if (binding.rbPickup.isChecked) "Outlet Erles Bakery - Jl. Mayor Bismo No. 27 Kediri" else address,
+                address = finalAddress,
                 notes = notes,
-                pickupDate = "$selectedDateStr ($selectedTimeStr)",
-                totalPrice = grandTotal,
-                status = "pending",
-                createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time)
-            )
-            cartDbHelper.saveOrder(newOrder)
+                pickupDate = isoDate,
+                cartItems = cartItems,
+                onSuccess = { createdOrder ->
+                    binding.btnSubmitOrder.isEnabled = true
+                    binding.btnSubmitOrder.text = "Konfirmasi & Pesan Sekarang"
 
-            showOrderSuccessDialog(orderCode, name)
+                    val orderToSave = farhan.zalfanudin.uts.model.Order(
+                        id = createdOrder.id,
+                        orderCode = createdOrder.orderCode,
+                        customerName = name,
+                        customerPhone = phone,
+                        address = finalAddress,
+                        notes = notes,
+                        pickupDate = "$selectedDateStr ($selectedTimeStr)",
+                        totalPrice = grandTotal,
+                        status = createdOrder.status,
+                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time)
+                    )
+                    cartDbHelper.saveOrder(orderToSave)
+                    cartDbHelper.clearCart()
+                    showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true)
+                },
+                onError = { errorMsg ->
+                    binding.btnSubmitOrder.isEnabled = true
+                    binding.btnSubmitOrder.text = "Konfirmasi & Pesan Sekarang"
+
+                    // Fallback offline jika server backend sedang tidak dapat dijangkau
+                    val dateCode = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Calendar.getInstance().time)
+                    val randomSeq = String.format(Locale.getDefault(), "%04d", (1..9999).random())
+                    val fallbackCode = "ORD-$dateCode-$randomSeq"
+
+                    val fallbackOrder = farhan.zalfanudin.uts.model.Order(
+                        orderCode = fallbackCode,
+                        customerName = name,
+                        customerPhone = phone,
+                        address = finalAddress,
+                        notes = notes,
+                        pickupDate = "$selectedDateStr ($selectedTimeStr)",
+                        totalPrice = grandTotal,
+                        status = "pending",
+                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time)
+                    )
+                    cartDbHelper.saveOrder(fallbackOrder)
+                    cartDbHelper.clearCart()
+                    showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg)
+                }
+            )
         }
     }
 
-    private fun showOrderSuccessDialog(orderCode: String, customerName: String) {
+    private fun showOrderSuccessDialog(orderCode: String, customerName: String, isServerSynced: Boolean = true, offlineNote: String = "") {
+        val syncBadge = if (isServerSynced) {
+            "✓ Tersinkronisasi ke Web Admin ERP"
+        } else {
+            "⚠ Tersimpan Offline di Perangkat (${offlineNote})"
+        }
+
         val message = """
             Terima kasih, Kak $customerName!
             Pesanan roti Anda telah berhasil dibuat.
@@ -408,6 +463,7 @@ class CheckoutActivity : AppCompatActivity() {
             Total: ${formatRupiah(grandTotal)}
             
             Status: Menunggu Konfirmasi (Pending)
+            Koneksi: $syncBadge
         """.trimIndent()
 
         AlertDialog.Builder(this)
@@ -415,7 +471,6 @@ class CheckoutActivity : AppCompatActivity() {
             .setMessage(message)
             .setCancelable(false)
             .setPositiveButton("Lihat Pesanan") { _, _ ->
-                cartDbHelper.clearCart()
                 Toast.makeText(this, "Pesanan berhasil dicatat & keranjang telah dikosongkan", Toast.LENGTH_SHORT).show()
                 finish()
             }

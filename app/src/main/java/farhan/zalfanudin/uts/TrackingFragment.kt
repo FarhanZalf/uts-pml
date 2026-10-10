@@ -151,7 +151,8 @@ class TrackingFragment : Fragment() {
         }
 
         // Jika pesanan sudah dibatalkan, sembunyikan QR Code kasir dan info pengantaran
-        if (order.status.lowercase(Locale.getDefault()) == "dibatalkan") {
+        val statusClean = order.status.lowercase(Locale.getDefault())
+        if (statusClean == "dibatalkan" || statusClean == "cancelled") {
             binding.layoutQrCodeContainer.visibility = View.GONE
             binding.layoutDeliveryInfoContainer.visibility = View.GONE
         }
@@ -160,7 +161,7 @@ class TrackingFragment : Fragment() {
         updateStatusViews(order)
 
         // Tombol Batalkan Pesanan: HANYA muncul jika status masih 'pending' (menunggu konfirmasi toko)
-        if (order.status.lowercase(Locale.getDefault()) == "pending") {
+        if (statusClean == "pending") {
             binding.btnCancelOrder.visibility = View.VISIBLE
             binding.btnCancelOrder.setOnClickListener {
                 showCancelOrderConfirmationDialog(order)
@@ -178,6 +179,37 @@ class TrackingFragment : Fragment() {
         binding.btnSimulateNextStatus.setOnClickListener {
             simulateNextStatus(order)
         }
+
+        // Sinkronisasi status pesanan terbaru dari Web Admin ERP via Volley (Poin UTS #18 & #19)
+        syncOrderWithServer(order.orderCode)
+    }
+
+    private fun syncOrderWithServer(orderCode: String) {
+        farhan.zalfanudin.uts.network.ApiService.trackOrder(
+            context = requireContext(),
+            orderCode = orderCode,
+            onSuccess = { serverOrder ->
+                if (_binding != null && isAdded) {
+                    val currentStatus = currentDisplayedOrder?.status?.lowercase(Locale.getDefault())
+                    val newStatus = serverOrder.status.lowercase(Locale.getDefault())
+                    if (currentStatus != newStatus) {
+                        cartDbHelper.updateOrderStatus(serverOrder.orderCode, serverOrder.status)
+                        val refreshed = cartDbHelper.getOrderByCode(serverOrder.orderCode) ?: serverOrder
+                        currentDisplayedOrder = refreshed
+                        updateStatusViews(refreshed)
+                        populateOrderHistoryList(cartDbHelper.getAllOrders())
+                        Toast.makeText(
+                            requireContext(),
+                            "Status diperbarui oleh Web Admin: ${serverOrder.status.uppercase(Locale.getDefault())}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            },
+            onError = { _ ->
+                // Jika offline atau server belum connect, tetap gunakan data lokal
+            }
+        )
     }
 
     private fun updateStatusViews(order: Order) {
@@ -192,7 +224,7 @@ class TrackingFragment : Fragment() {
         val isPickup = order.isPickup
 
         when (statusClean) {
-            "diproses" -> {
+            "diproses", "processing", "confirmed" -> {
                 binding.tvTrackDetailStatusBadge.text = "Sedang Diproses Dapur"
                 binding.tvTrackDetailStatusBadge.setBackgroundResource(R.drawable.bg_badge_process)
                 binding.tvTrackDetailStatusBadge.setTextColor(colorBlue)
@@ -208,7 +240,7 @@ class TrackingFragment : Fragment() {
                 binding.tvStep3Text.text = if (isPickup) "3. Roti Siap Diambil di Outlet Toko" else "3. Kurir Sedang Menuju Alamat Anda"
                 binding.ivStep3Icon.setImageResource(R.drawable.ic_bakery_item)
             }
-            "siap" -> {
+            "siap", "ready" -> {
                 binding.tvTrackDetailStatusBadge.text = if (isPickup) "Siap Diambil di Outlet" else "Kurir Sedang Mengantar"
                 binding.tvTrackDetailStatusBadge.setBackgroundResource(R.drawable.bg_badge_success)
                 binding.tvTrackDetailStatusBadge.setTextColor(colorGreen)
@@ -220,7 +252,7 @@ class TrackingFragment : Fragment() {
                 binding.tvStep3Text.text = if (isPickup) "3. Roti Siap Diambil di Outlet Toko (AKTIF)" else "3. Kurir Sedang Menuju Alamat Anda (AKTIF)"
                 binding.ivStep3Icon.setImageResource(R.drawable.ic_check_circle)
             }
-            "selesai" -> {
+            "selesai", "completed" -> {
                 binding.tvTrackDetailStatusBadge.text = "Pesanan Selesai"
                 binding.tvTrackDetailStatusBadge.setBackgroundResource(R.drawable.bg_badge_success)
                 binding.tvTrackDetailStatusBadge.setTextColor(colorGreen)
@@ -232,7 +264,7 @@ class TrackingFragment : Fragment() {
                 binding.tvStep3Text.text = if (isPickup) "3. Roti Telah Selesai Diambil di Kasir" else "3. Roti Telah Diterima Pelanggan di Rumah"
                 binding.ivStep3Icon.setImageResource(R.drawable.ic_check_circle)
             }
-            "dibatalkan" -> {
+            "dibatalkan", "cancelled" -> {
                 val colorRed = ContextCompat.getColor(requireContext(), R.color.status_red)
                 binding.tvTrackDetailStatusBadge.text = "Pesanan Dibatalkan"
                 binding.tvTrackDetailStatusBadge.setBackgroundResource(R.drawable.bg_badge_cancelled)
@@ -347,22 +379,22 @@ class TrackingFragment : Fragment() {
             itemBinding.tvItemOrderTotal.text = formatRupiah(order.totalPrice)
 
             when (order.status.lowercase(Locale.getDefault())) {
-                "diproses" -> {
+                "diproses", "processing", "confirmed" -> {
                     itemBinding.tvItemOrderStatus.text = "Diproses"
                     itemBinding.tvItemOrderStatus.setBackgroundResource(R.drawable.bg_badge_process)
                     itemBinding.tvItemOrderStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_blue))
                 }
-                "siap" -> {
+                "siap", "ready" -> {
                     itemBinding.tvItemOrderStatus.text = if (order.isPickup) "Siap Diambil" else "Diantar Kurir"
                     itemBinding.tvItemOrderStatus.setBackgroundResource(R.drawable.bg_badge_success)
                     itemBinding.tvItemOrderStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_green))
                 }
-                "selesai" -> {
+                "selesai", "completed" -> {
                     itemBinding.tvItemOrderStatus.text = "Selesai"
                     itemBinding.tvItemOrderStatus.setBackgroundResource(R.drawable.bg_badge_success)
                     itemBinding.tvItemOrderStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_green))
                 }
-                "dibatalkan" -> {
+                "dibatalkan", "cancelled" -> {
                     itemBinding.tvItemOrderStatus.text = "Dibatalkan"
                     itemBinding.tvItemOrderStatus.setBackgroundResource(R.drawable.bg_badge_cancelled)
                     itemBinding.tvItemOrderStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_red))

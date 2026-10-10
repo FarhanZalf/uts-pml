@@ -51,6 +51,9 @@ dependencies {
     // OpenStreetMap (OSM) peta lokasi toko & pengantaran
     implementation("org.osmdroid:osmdroid-android:6.1.18")
 
+    // Pustaka Volley untuk konsumsi HTTP REST API backend Laravel (Poin UTS #19: Volley 1% & #18: MySQL Web Service 2%)
+    implementation("com.android.volley:volley:1.2.1")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)

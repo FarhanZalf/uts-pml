@@ -46,8 +46,8 @@ Sesuai dengan tabel kriteria penilaian lembar soal UTS PML:
 | 15 | Fragment | ✅ Selesai | 1% | MenuFragment, CartFragment, TrackingFragment |
 | 16 | Activity | ✅ Selesai | 1% | MainActivity, ProductDetailActivity, CheckoutActivity |
 | 17 | Database Sqlite | ✅ Selesai | 1% | CartDatabaseHelper: cart_items & orders_history offline |
-| 18 | Database MySQL & Web Service/API | Dalam Antrean | 2% | Terintegrasi dengan API Laravel Erles Bakery ERP |
-| 19 | Pustaka Volley | Dalam Antrean | 1% | Konsumsi HTTP REST API backend Laravel (JSON Request & Response) |
+| 18 | Database MySQL & Web Service/API | ✅ Selesai | 2% | Terintegrasi penuh dengan API Laravel Erles Bakery ERP (GET categories/products, POST orders, GET track) |
+| 19 | Pustaka Volley | ✅ Selesai | 1% | Implementasi ApiService & VolleySingleton untuk konsumsi HTTP REST API backend Laravel (JSON Request & Response) |
 | 20 | Kamera | - | 1% | *(Dilewati - tidak relevan untuk alur pemesanan pembeli)* |
 | 21 | GPS | ✅ Selesai | 2% | Deteksi otomatis koordinat GPS pelanggan via Fused/LocationManager di Checkout |
 | 22 | Google Maps / OpenStreetMaps | ✅ Selesai | 2% | Peta OSM interaktif (pilih titik alamat di Checkout, rute pengantaran kurir & lokasi toko di Tracking) |
