@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -53,6 +54,14 @@ dependencies {
 
     // Pustaka Volley untuk konsumsi HTTP REST API backend Laravel (Poin UTS #19: Volley 1% & #18: MySQL Web Service 2%)
     implementation("com.android.volley:volley:1.2.1")
+
+    // Firebase BoM & SDKs
+    implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-inappmessaging-display")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)

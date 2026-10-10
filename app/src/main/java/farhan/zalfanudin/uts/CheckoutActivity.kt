@@ -52,9 +52,9 @@ class CheckoutActivity : AppCompatActivity() {
     private var selectedTimeStr: String = ""
 
     companion object {
-        private const val PREFS_NAME = "erles_customer_prefs"
-        private const val KEY_NAME = "pref_customer_name"
-        private const val KEY_PHONE = "pref_customer_phone"
+        const val PREFS_NAME = "erles_customer_prefs"
+        const val KEY_NAME = "pref_customer_name"
+        const val KEY_PHONE = "pref_customer_phone"
 
         private const val FEE_GREETING_CARD = 5000.0
         private const val FEE_CANDLES = 3000.0
@@ -113,7 +113,7 @@ class CheckoutActivity : AppCompatActivity() {
         }
     }
 
-    // 1. SharedPreferences: Mengisi nama & nomor HP otomatis jika sudah pernah memesan
+    // 1. SharedPreferences & Firebase Auth: Mengisi nama & nomor HP otomatis
     private fun loadCustomerFromPreferences() {
         val savedName = sharedPreferences.getString(KEY_NAME, "")
         val savedPhone = sharedPreferences.getString(KEY_PHONE, "")
@@ -123,6 +123,31 @@ class CheckoutActivity : AppCompatActivity() {
         }
         if (!savedPhone.isNullOrEmpty()) {
             binding.etCustomerPhone.setText(savedPhone)
+        }
+
+        // Firebase Authentication auto-fill jika pengguna sedang masuk
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            val displayName = currentUser.displayName
+            if (!displayName.isNullOrEmpty() && binding.etCustomerName.text.isNullOrEmpty()) {
+                binding.etCustomerName.setText(displayName)
+            }
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { doc ->
+                    if (doc != null && doc.exists()) {
+                        val name = doc.getString("name")
+                        val phone = doc.getString("phone")
+                        if (!name.isNullOrEmpty() && binding.etCustomerName.text.isNullOrEmpty()) {
+                            binding.etCustomerName.setText(name)
+                        }
+                        if (!phone.isNullOrEmpty() && binding.etCustomerPhone.text.isNullOrEmpty()) {
+                            binding.etCustomerPhone.setText(phone)
+                        }
+                    }
+                }
         }
     }
 
@@ -417,6 +442,11 @@ class CheckoutActivity : AppCompatActivity() {
                     )
                     cartDbHelper.saveOrder(orderToSave)
                     cartDbHelper.clearCart()
+
+                    // Subscribe ke topic FCM untuk menerima pembaruan status pesanan realtime
+                    com.google.firebase.messaging.FirebaseMessaging.getInstance()
+                        .subscribeToTopic("order_${createdOrder.orderCode}")
+
                     showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true)
                 },
                 onError = { errorMsg ->
@@ -441,6 +471,8 @@ class CheckoutActivity : AppCompatActivity() {
                     )
                     cartDbHelper.saveOrder(fallbackOrder)
                     cartDbHelper.clearCart()
+                    com.google.firebase.messaging.FirebaseMessaging.getInstance()
+                        .subscribeToTopic("order_$fallbackCode")
                     showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg)
                 }
             )

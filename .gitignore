@@ -23,3 +23,8 @@ local.properties
 /admin/node_modules/
 /admin/dist/
 /admin/.env.local
+
+# Cloud & Mobile Secrets
+google-services.json
+*service-account*.json
+*firebase-adminsdk*.json

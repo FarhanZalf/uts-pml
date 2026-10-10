@@ -36,6 +36,7 @@ class TrackingFragment : Fragment() {
 
     private lateinit var cartDbHelper: CartDatabaseHelper
     private var currentDisplayedOrder: Order? = null
+    private var firestoreListener: com.google.firebase.firestore.ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,6 +69,16 @@ class TrackingFragment : Fragment() {
     private fun loadData() {
         val orders = cartDbHelper.getAllOrders()
         populateOrderHistoryList(orders)
+
+        // Jika ada argumen orderCode dari notifikasi, utamakan pesanan tersebut
+        val targetCode = arguments?.getString(ARG_ORDER_CODE)
+        if (!targetCode.isNullOrEmpty()) {
+            val targeted = cartDbHelper.getOrderByCode(targetCode)
+            if (targeted != null) {
+                displayOrderDetail(targeted)
+                return
+            }
+        }
 
         if (orders.isEmpty()) {
             binding.cardTrackingDetail.visibility = View.GONE
@@ -180,8 +191,49 @@ class TrackingFragment : Fragment() {
             simulateNextStatus(order)
         }
 
+        // Subscribe ke topic FCM saat layar pelacakan dibuka (LANGKAH 5)
+        com.google.firebase.messaging.FirebaseMessaging.getInstance()
+            .subscribeToTopic("order_${order.orderCode}")
+
         // Sinkronisasi status pesanan terbaru dari Web Admin ERP via Volley (Poin UTS #18 & #19)
         syncOrderWithServer(order.orderCode)
+
+        // Pasang Snapshot Listener Firestore realtime (LANGKAH 4)
+        listenToOrderStatusRealtime(order.orderCode)
+    }
+
+    private fun listenToOrderStatusRealtime(orderCode: String) {
+        firestoreListener?.remove()
+        firestoreListener = null
+
+        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+        firestoreListener = db.collection("order_status").document(orderCode)
+            .addSnapshotListener { snapshot, error ->
+                if (_binding == null || !isAdded) return@addSnapshotListener
+                if (error != null) {
+                    // Jika offline atau error, sembunyikan indikator realtime tanpa memutus tampilan API
+                    binding.tvRealtimeIndicator.visibility = View.GONE
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    // Data berasal dari Firestore -> Tampilkan indikator kecil Realtime
+                    binding.tvRealtimeIndicator.visibility = View.VISIBLE
+
+                    val newStatus = snapshot.getString("status")
+                    if (!newStatus.isNullOrEmpty() && newStatus.lowercase(Locale.getDefault()) != currentDisplayedOrder?.status?.lowercase(Locale.getDefault())) {
+                        cartDbHelper.updateOrderStatus(orderCode, newStatus)
+                        val refreshed = cartDbHelper.getOrderByCode(orderCode)
+                        if (refreshed != null) {
+                            currentDisplayedOrder = refreshed
+                            updateStatusViews(refreshed)
+                            populateOrderHistoryList(cartDbHelper.getAllOrders())
+                        }
+                    }
+                } else {
+                    // Dokumen belum ada di Firestore -> Sembunyikan indikator realtime, tetap tampilkan data API
+                    binding.tvRealtimeIndicator.visibility = View.GONE
+                }
+            }
     }
 
     private fun syncOrderWithServer(orderCode: String) {
@@ -563,8 +615,29 @@ class TrackingFragment : Fragment() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        // Lepas snapshot listener saat fragment berhenti agar hemat resource
+        firestoreListener?.remove()
+        firestoreListener = null
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
+        firestoreListener?.remove()
+        firestoreListener = null
         _binding = null
+    }
+
+    companion object {
+        const val ARG_ORDER_CODE = "arg_order_code"
+
+        fun newInstance(orderCode: String): TrackingFragment {
+            return TrackingFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_ORDER_CODE, orderCode)
+                }
+            }
+        }
     }
 }
