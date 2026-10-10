@@ -14,3 +14,12 @@
 .cxx
 local.properties
 .idea/
+
+# Backend & Admin Web ignores
+/backend/vendor/
+/backend/.env
+/backend/storage/*.key
+/backend/storage/logs/*.log
+/admin/node_modules/
+/admin/dist/
+/admin/.env.local

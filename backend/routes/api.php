@@ -1,0 +1,92 @@
+<?php
+
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\HealthController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProductController;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes — Erles Bakery ERP
+|--------------------------------------------------------------------------
+*/
+
+// Health Check
+Route::get('/health', HealthController::class);
+
+// ─────────────────────────────────────────────────────────────
+// Public Routes
+// ─────────────────────────────────────────────────────────────
+
+// Auth
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+
+// Public Product & Category Catalog
+Route::middleware('throttle:public-api')->group(function () {
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/categories/{idOrSlug}', [CategoryController::class, 'show']);
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/{idOrSlug}', [ProductController::class, 'show']);
+    Route::get('/orders/track/{idOrCode}', [OrderController::class, 'show']);
+});
+
+// Public Order Placement
+Route::post('/orders', [OrderController::class, 'store'])->middleware('throttle:public-order');
+
+// ─────────────────────────────────────────────────────────────
+// Protected Admin & Staff Routes (Sanctum)
+// ─────────────────────────────────────────────────────────────
+Route::middleware('auth:sanctum')->group(function () {
+    // Auth profile & logout
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Category Management (Admin / Staff)
+    Route::post('/categories', [CategoryController::class, 'store'])->middleware('role:admin,staff');
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->middleware('role:admin,staff');
+    Route::patch('/categories/{category}', [CategoryController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->middleware('role:admin');
+
+    // Admin / Staff Product Management (CUD)
+    Route::post('/products', [ProductController::class, 'store'])->middleware('role:admin,staff');
+    Route::post('/products/{product}/adjust-stock', [ProductController::class, 'adjustStock'])->middleware('role:admin,staff');
+    Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('role:admin,staff');
+    Route::patch('/products/{product}', [ProductController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('role:admin');
+
+    // Customer Management (Admin / Staff)
+    Route::apiResource('/customers', \App\Http\Controllers\CustomerController::class)->middleware('role:admin,staff');
+
+    // Order Management (Admin & Staff)
+    Route::get('/orders', [OrderController::class, 'index'])->middleware('role:admin,staff');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->middleware('role:admin,staff');
+    Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus'])->middleware('role:admin,staff');
+    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->middleware('role:admin,staff');
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->middleware('role:admin,staff');
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->middleware('role:admin');
+
+    // Payment Management (Admin & Staff)
+    Route::get('/orders/{order}/payments', [PaymentController::class, 'forOrder'])->middleware('role:admin,staff');
+    Route::post('/orders/{order}/payments', [PaymentController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/payments', [PaymentController::class, 'index'])->middleware('role:admin,staff');
+    Route::post('/payments', [PaymentController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->middleware('role:admin,staff');
+    Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->middleware('role:admin');
+
+    // Dashboard (Admin & Staff)
+    Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('role:admin,staff');
+
+    // Finance Management (Admin & Staff)
+    Route::get('/finance/summary', [FinanceController::class, 'summary'])->middleware('role:admin,staff');
+    Route::get('/finance', [FinanceController::class, 'index'])->middleware('role:admin,staff');
+    Route::get('/finance/{finance}', [FinanceController::class, 'show'])->middleware('role:admin,staff');
+    Route::post('/finance', [FinanceController::class, 'store'])->middleware('role:admin,staff');
+    Route::put('/finance/{finance}', [FinanceController::class, 'update'])->middleware('role:admin,staff');
+    Route::patch('/finance/{finance}', [FinanceController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/finance/{finance}', [FinanceController::class, 'destroy'])->middleware('role:admin');
+});

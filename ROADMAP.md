@@ -80,9 +80,12 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
 ---
 
 #### 📌 FASE 3: Integrasi API Laravel (Volley) & Cloud Messaging (FCM)
-- [ ] **Pustaka Volley & Integrasi API Laravel (Delegasi ke Rekan Tim: Chelsea)**:
-  - Rekan tim mengerjakan endpoint API di Laravel dan konsumsi Volley di Android (`GET /api/products`, `POST /api/orders`, dsb.).
-  - Seluruh kode Android dasar yang sudah fix telah dimerge ke `main` agar rekan tim bisa langsung `git pull origin main`.
+- [x] **Pustaka Volley & Integrasi API Laravel (SELESAI)**:
+  - Implementasi `VolleySingleton` & `ApiService` untuk konsumsi endpoint Laravel Erles Bakery ERP.
+  - `GET /api/categories` & `GET /api/products`: memuat katalog dinamis dari database MySQL ke `MenuFragment`.
+  - `POST /api/orders`: mengirim pesanan langsung dari `CheckoutActivity` ke Web Admin ERP.
+  - `GET /api/orders/track/{code}`: sinkronisasi status live dari Web Admin ke `TrackingFragment`.
+  - Offline fallback: tetap menyimpan riwayat ke SQLite lokal jika koneksi backend terputus.
 - [ ] Firebase Cloud Messaging (FCM) untuk notifikasi status pesanan
 - [ ] Firebase In-App Messaging untuk banner promo
 - [ ] Pengujian menyeluruh (*End-to-End Test*) & Penyusunan Laporan UTS
@@ -90,13 +93,10 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
 ---
 
 ### Status Pengerjaan Terkini (Current State)
-* **Tanggal Update**: 2026-10-10 (02:16 WIB)
-* **Fase Aktif**: **FASE 1 SELESAI (100%), FASE 2 (GPS & OSM) SELESAI (100%)**
-* **Status Git**: 
-  - Seluruh kode telah di-merge bersih ke branch `main` (Commit `c2c371e`) dan di-push ke remote `origin/main` & `origin/farhan-ganteng`.
-  - Proyek lolos uji kompilasi lokal Gradle: `BUILD SUCCESSFUL`.
-* **Total Poin UTS Terkunci Saat Ini**: **34% Fitur Mobile + 10% Web Backend + 30% Laporan = 74%**
+* **Tanggal Update**: 2026-10-10 (14:30 WIB)
+* **Fase Aktif**: **FASE 1 (100%), FASE 2 (100%), INTEGRASI VOLLEY & BACKEND LARAVEL SELESAI (100%)**
+* **Total Poin UTS Terkunci Saat Ini**: **37% Fitur Mobile + 10% Web Backend + 30% Laporan = 77%**
 * **Posisi Terakhir**:
-  - Menunggu rekan tim menarik (*git pull*) kode di branch `main` untuk mengintegrasikan backend Laravel & Volley API.
-  - Fitur berikutnya di sisi Farhan: Notifikasi Status Pesanan (FCM) / Penyusunan Laporan UTS.
+  - Seluruh integrasi Volley, sinkronisasi katalog, checkout ke Web Admin, dan live order tracking telah tuntas.
+  - Fitur berikutnya: Notifikasi Status Pesanan (FCM) / Penyusunan Laporan UTS.
 

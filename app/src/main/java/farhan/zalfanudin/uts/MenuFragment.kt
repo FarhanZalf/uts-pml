@@ -29,6 +29,8 @@ class MenuFragment : Fragment() {
 
     private lateinit var cartDbHelper: CartDatabaseHelper
     private lateinit var productAdapter: ProductAdapter
+    private var allProducts = mutableListOf<Product>()
+    private var allCategories = mutableListOf<String>()
     private var displayedProducts = mutableListOf<Product>()
     private var selectedCategory: String = "Semua Kategori"
     private var searchQuery: String = ""
@@ -46,16 +48,59 @@ class MenuFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         cartDbHelper = CartDatabaseHelper(requireContext())
+        allProducts = DummyData.products.toMutableList()
+        allCategories = DummyData.categories.map { it.name }.toMutableList()
 
         setupListView()
         setupAutoCompleteSearch()
         setupCategorySpinner()
         setupSortPopupMenu()
+
+        // Poin UTS #18 & #19: Mengambil data real-time dari Web Service Laravel via Volley
+        loadCategoriesFromApi()
+        loadProductsFromApi()
+    }
+
+    private fun loadCategoriesFromApi() {
+        farhan.zalfanudin.uts.network.ApiService.getCategories(
+            requireContext(),
+            onSuccess = { categories ->
+                if (_binding != null && isAdded) {
+                    allCategories = categories.map { it.name }.toMutableList()
+                    val spinnerAdapter = ArrayAdapter(
+                        requireContext(),
+                        android.R.layout.simple_spinner_item,
+                        allCategories
+                    )
+                    spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    binding.spinnerCategory.adapter = spinnerAdapter
+                }
+            },
+            onError = { _ ->
+                // Tetap menggunakan DummyData kategori jika server offline
+            }
+        )
+    }
+
+    private fun loadProductsFromApi() {
+        farhan.zalfanudin.uts.network.ApiService.getProducts(
+            requireContext(),
+            onSuccess = { products ->
+                if (_binding != null && isAdded && products.isNotEmpty()) {
+                    allProducts = products.toMutableList()
+                    setupAutoCompleteSearch()
+                    filterAndDisplayProducts()
+                }
+            },
+            onError = { _ ->
+                // Tetap menggunakan DummyData jika server offline
+            }
+        )
     }
 
     // 1. Setup ListView Produk
     private fun setupListView() {
-        displayedProducts = DummyData.products.toMutableList()
+        displayedProducts = allProducts.toMutableList()
 
         productAdapter = ProductAdapter(
             context = requireContext(),
@@ -134,7 +179,7 @@ class MenuFragment : Fragment() {
 
     // 2. Setup AutoCompleteTextView (Pencarian Otomatis)
     private fun setupAutoCompleteSearch() {
-        val productNames = DummyData.products.map { it.name }
+        val productNames = allProducts.map { it.name }
         val searchAdapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_dropdown_item_1line,
@@ -159,7 +204,7 @@ class MenuFragment : Fragment() {
 
     // 3. Setup Spinner (Filter Kategori Roti)
     private fun setupCategorySpinner() {
-        val categoryNames = DummyData.categories.map { it.name }
+        val categoryNames = allCategories
         val spinnerAdapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_item,
@@ -170,7 +215,7 @@ class MenuFragment : Fragment() {
 
         binding.spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedCategory = categoryNames[position]
+                selectedCategory = categoryNames.getOrNull(position) ?: "Semua Kategori"
                 filterAndDisplayProducts()
             }
 
@@ -214,7 +259,7 @@ class MenuFragment : Fragment() {
     }
 
     private fun filterAndDisplayProducts() {
-        var filtered = DummyData.products
+        var filtered = allProducts.toList()
 
         if (selectedCategory != "Semua Kategori") {
             filtered = filtered.filter { it.category.equals(selectedCategory, ignoreCase = true) }
