@@ -15,7 +15,7 @@ object ApiConfig {
     // Host backend PC untuk pengujian HP fisik via Wi-Fi (melalui Vite Proxy port 5174 yang terbuka ke jaringan LAN):
     // Jika via USB adb reverse, gunakan: http://127.0.0.1:8000/api
     // Jika via Android Emulator, gunakan: http://10.0.2.2:8000/api
-    const val DEFAULT_BASE_URL = "http://192.168.1.17:5174/api"
+    const val DEFAULT_BASE_URL = "http://127.0.0.1:8000/api"
 
     fun getBaseUrl(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
