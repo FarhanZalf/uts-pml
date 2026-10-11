@@ -3,6 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_auth"
+        android:title="Akun Saya / Masuk"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_about"
         android:title="Tentang Erles Bakery"
         android:icon="@drawable/ic_info"
@@ -17,6 +22,11 @@
     <item
         android:id="@+id/action_help"
         android:title="Panduan Pemesanan"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_server_settings"
+        android:title="⚙️ Pengaturan Server API"
         app:showAsAction="never" />
 
     <item

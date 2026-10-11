@@ -12,6 +12,7 @@ import farhan.zalfanudin.uts.model.Order
 import farhan.zalfanudin.uts.model.Product
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 
 /**
  * Service untuk menangani komunikasi jaringan REST API Erles Bakery ERP menggunakan Android Volley.
@@ -204,6 +205,7 @@ object ApiService {
                         val orderCode = dataObj.optString("kode_pesanan", "")
                         val totalPrice = dataObj.optDouble("total_price", 0.0)
                         val status = dataObj.optString("status", "pending")
+                        val paymentStatus = dataObj.optString("payment_status", "unpaid")
                         val createdAt = dataObj.optString("created_at", "")
                         val orderId = dataObj.optInt("id", 0)
 
@@ -217,6 +219,7 @@ object ApiService {
                             pickupDate = pickupDate,
                             totalPrice = totalPrice,
                             status = status,
+                            paymentStatus = paymentStatus,
                             createdAt = createdAt
                         )
                         onSuccess(createdOrder)
@@ -287,6 +290,7 @@ object ApiService {
                         val pickupDate = dataObj.optString("tanggal_ambil", "")
                         val totalPrice = dataObj.optDouble("total_price", 0.0)
                         val status = dataObj.optString("status", "pending")
+                        val paymentStatus = dataObj.optString("payment_status", "unpaid")
                         val createdAt = dataObj.optString("created_at", "")
                         val orderId = dataObj.optInt("id", 0)
 
@@ -300,6 +304,7 @@ object ApiService {
                             pickupDate = pickupDate,
                             totalPrice = totalPrice,
                             status = status,
+                            paymentStatus = paymentStatus,
                             createdAt = createdAt
                         )
                         onSuccess(trackedOrder)
@@ -328,6 +333,102 @@ object ApiService {
         request.retryPolicy = DefaultRetryPolicy(
             TIMEOUT_MS,
             DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        )
+
+        VolleySingleton.getInstance(context).addToRequestQueue(request)
+    }
+
+    /**
+     * Mengirim konfirmasi pembayaran ke backend Laravel ERP: POST /api/orders/pay
+     */
+    fun confirmPayment(
+        context: Context,
+        orderCode: String,
+        amount: Double,
+        method: String,
+        onSuccess: (Order) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val url = ApiConfig.getConfirmPaymentUrl(context)
+
+        val payload = JSONObject().apply {
+            put("kode_pesanan", orderCode)
+            put("nominal", amount)
+            put("metode", method.lowercase(Locale.getDefault()))
+            put("tipe", "lunas")
+            put("catatan", "Pembayaran dari Aplikasi Mobile")
+        }
+
+        val request = object : JsonObjectRequest(
+            Method.POST,
+            url,
+            payload,
+            { response ->
+                try {
+                    val dataObj = response.optJSONObject("data")
+                    if (dataObj != null) {
+                        val code = dataObj.optString("kode_pesanan", orderCode)
+                        val customerName = dataObj.optString("customer_name", "")
+                        val customerPhone = dataObj.optString("customer_phone", "")
+                        val address = dataObj.optString("alamat", "")
+                        val notes = dataObj.optString("catatan", "")
+                        val pickupDate = dataObj.optString("tanggal_ambil", "")
+                        val totalPrice = dataObj.optDouble("total_price", amount)
+                        val status = dataObj.optString("status", "pending")
+                        val paymentStatus = dataObj.optString("payment_status", "paid")
+                        val createdAt = dataObj.optString("created_at", "")
+                        val orderId = dataObj.optInt("id", 0)
+
+                        val updatedOrder = Order(
+                            id = orderId,
+                            orderCode = code,
+                            customerName = customerName,
+                            customerPhone = customerPhone,
+                            address = address,
+                            notes = notes,
+                            pickupDate = pickupDate,
+                            totalPrice = totalPrice,
+                            status = status,
+                            paymentStatus = paymentStatus,
+                            paymentMethod = method,
+                            createdAt = createdAt
+                        )
+                        onSuccess(updatedOrder)
+                    } else {
+                        val message = response.optString("message", "Pembayaran berhasil dicatat")
+                        onError(message)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing confirmPayment response: ${e.message}", e)
+                    onError("Gagal membaca respon pembayaran dari server")
+                }
+            },
+            { error ->
+                var errorMsg = "Gagal mengirim konfirmasi pembayaran ke server"
+                try {
+                    error.networkResponse?.data?.let { data ->
+                        val respStr = String(data, Charsets.UTF_8)
+                        val errorJson = JSONObject(respStr)
+                        errorMsg = errorJson.optString("message", errorMsg)
+                    }
+                } catch (_: Exception) {}
+
+                Log.e(TAG, "Volley confirmPayment error: $errorMsg")
+                onError(errorMsg)
+            }
+        ) {
+            override fun getHeaders(): MutableMap<String, String> {
+                return mutableMapOf(
+                    "Accept" to "application/json",
+                    "Content-Type" to "application/json"
+                )
+            }
+        }
+
+        request.retryPolicy = DefaultRetryPolicy(
+            TIMEOUT_MS,
+            0,
             DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
         )
 

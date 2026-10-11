@@ -12,7 +12,7 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
 
     companion object {
         private const val DATABASE_NAME = "erles_bakery.db"
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
 
         // Tabel Keranjang
         const val TABLE_CART = "cart_items"
@@ -36,6 +36,8 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         const val COLUMN_TANGGAL_AMBIL = "tanggal_ambil"
         const val COLUMN_TOTAL_PRICE = "total_price"
         const val COLUMN_STATUS = "status"
+        const val COLUMN_PAYMENT_STATUS = "payment_status"
+        const val COLUMN_PAYMENT_METHOD = "payment_method"
         const val COLUMN_CREATED_AT = "created_at"
     }
 
@@ -64,6 +66,8 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 $COLUMN_TANGGAL_AMBIL TEXT NOT NULL,
                 $COLUMN_TOTAL_PRICE REAL NOT NULL,
                 $COLUMN_STATUS TEXT DEFAULT 'pending',
+                $COLUMN_PAYMENT_STATUS TEXT DEFAULT 'unpaid',
+                $COLUMN_PAYMENT_METHOD TEXT DEFAULT 'qris',
                 $COLUMN_CREATED_AT TEXT NOT NULL
             )
         """.trimIndent()
@@ -85,6 +89,8 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                     $COLUMN_TANGGAL_AMBIL TEXT NOT NULL,
                     $COLUMN_TOTAL_PRICE REAL NOT NULL,
                     $COLUMN_STATUS TEXT DEFAULT 'pending',
+                    $COLUMN_PAYMENT_STATUS TEXT DEFAULT 'unpaid',
+                    $COLUMN_PAYMENT_METHOD TEXT DEFAULT 'qris',
                     $COLUMN_CREATED_AT TEXT NOT NULL
                 )
             """.trimIndent()
@@ -95,6 +101,14 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 db.execSQL("ALTER TABLE $TABLE_ORDERS ADD COLUMN $COLUMN_CATATAN TEXT DEFAULT ''")
             } catch (_: Exception) {
             }
+        }
+        if (oldVersion < 4) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_ORDERS ADD COLUMN $COLUMN_PAYMENT_STATUS TEXT DEFAULT 'unpaid'")
+            } catch (_: Exception) {}
+            try {
+                db.execSQL("ALTER TABLE $TABLE_ORDERS ADD COLUMN $COLUMN_PAYMENT_METHOD TEXT DEFAULT 'qris'")
+            } catch (_: Exception) {}
         }
     }
 
@@ -210,6 +224,40 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
 
     // --- MANAJEMEN RIWAYAT PESANAN (ORDERS) ---
 
+    private fun parseOrderFromCursor(cursor: android.database.Cursor): Order {
+        val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ORDER_ID))
+        val orderCode = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_KODE_PESANAN))
+        val customerName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_NAME))
+        val customerPhone = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_PHONE))
+        val address = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ALAMAT))
+        val notes = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATATAN)) ?: ""
+        val pickupDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TANGGAL_AMBIL))
+        val totalPrice = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_TOTAL_PRICE))
+        val status = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATUS))
+        val createdAt = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATED_AT))
+
+        val payStatusIdx = cursor.getColumnIndex(COLUMN_PAYMENT_STATUS)
+        val payStatus = if (payStatusIdx >= 0 && !cursor.isNull(payStatusIdx)) cursor.getString(payStatusIdx) else "unpaid"
+
+        val payMethodIdx = cursor.getColumnIndex(COLUMN_PAYMENT_METHOD)
+        val payMethod = if (payMethodIdx >= 0 && !cursor.isNull(payMethodIdx)) cursor.getString(payMethodIdx) else "qris"
+
+        return Order(
+            id = id,
+            orderCode = orderCode,
+            customerName = customerName,
+            customerPhone = customerPhone,
+            address = address,
+            notes = notes,
+            pickupDate = pickupDate,
+            totalPrice = totalPrice,
+            status = status,
+            paymentStatus = payStatus,
+            paymentMethod = payMethod,
+            createdAt = createdAt
+        )
+    }
+
     fun saveOrder(order: Order): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -221,6 +269,8 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
             put(COLUMN_TANGGAL_AMBIL, order.pickupDate)
             put(COLUMN_TOTAL_PRICE, order.totalPrice)
             put(COLUMN_STATUS, order.status)
+            put(COLUMN_PAYMENT_STATUS, order.paymentStatus)
+            put(COLUMN_PAYMENT_METHOD, order.paymentMethod)
             put(COLUMN_CREATED_AT, order.createdAt)
         }
         val id = db.insert(TABLE_ORDERS, null, values)
@@ -234,19 +284,7 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
 
         if (cursor.moveToFirst()) {
             do {
-                val order = Order(
-                    id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ORDER_ID)),
-                    orderCode = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_KODE_PESANAN)),
-                    customerName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_NAME)),
-                    customerPhone = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_PHONE)),
-                    address = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ALAMAT)),
-                    notes = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATATAN)) ?: "",
-                    pickupDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TANGGAL_AMBIL)),
-                    totalPrice = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_TOTAL_PRICE)),
-                    status = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATUS)),
-                    createdAt = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATED_AT))
-                )
-                orders.add(order)
+                orders.add(parseOrderFromCursor(cursor))
             } while (cursor.moveToNext())
         }
         cursor.close()
@@ -258,18 +296,7 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         val cursor = db.rawQuery("SELECT * FROM $TABLE_ORDERS ORDER BY $COLUMN_ORDER_ID DESC LIMIT 1", null)
         var order: Order? = null
         if (cursor.moveToFirst()) {
-            order = Order(
-                id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ORDER_ID)),
-                orderCode = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_KODE_PESANAN)),
-                customerName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_NAME)),
-                customerPhone = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_PHONE)),
-                address = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ALAMAT)),
-                notes = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATATAN)) ?: "",
-                pickupDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TANGGAL_AMBIL)),
-                totalPrice = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_TOTAL_PRICE)),
-                status = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATUS)),
-                createdAt = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATED_AT))
-            )
+            order = parseOrderFromCursor(cursor)
         }
         cursor.close()
         return order
@@ -283,18 +310,7 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         )
         var order: Order? = null
         if (cursor.moveToFirst()) {
-            order = Order(
-                id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ORDER_ID)),
-                orderCode = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_KODE_PESANAN)),
-                customerName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_NAME)),
-                customerPhone = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CUSTOMER_PHONE)),
-                address = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ALAMAT)),
-                notes = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATATAN)) ?: "",
-                pickupDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TANGGAL_AMBIL)),
-                totalPrice = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_TOTAL_PRICE)),
-                status = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATUS)),
-                createdAt = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATED_AT))
-            )
+            order = parseOrderFromCursor(cursor)
         }
         cursor.close()
         return order
@@ -305,6 +321,29 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         val values = ContentValues().apply {
             put(COLUMN_STATUS, newStatus)
         }
+        val rows = db.update(TABLE_ORDERS, values, "LOWER($COLUMN_KODE_PESANAN) = LOWER(?)", arrayOf(orderCode.trim()))
+        return rows > 0
+    }
+
+    fun updateOrderPaymentStatus(orderCode: String, newPaymentStatus: String): Boolean {
+        val db = writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_PAYMENT_STATUS, newPaymentStatus)
+        }
+        val rows = db.update(TABLE_ORDERS, values, "LOWER($COLUMN_KODE_PESANAN) = LOWER(?)", arrayOf(orderCode.trim()))
+        return rows > 0
+    }
+
+    fun updateOrderStatusAndPayment(orderCode: String, newStatus: String?, newPaymentStatus: String?): Boolean {
+        val db = writableDatabase
+        val values = ContentValues()
+        if (!newStatus.isNullOrEmpty()) {
+            values.put(COLUMN_STATUS, newStatus)
+        }
+        if (!newPaymentStatus.isNullOrEmpty()) {
+            values.put(COLUMN_PAYMENT_STATUS, newPaymentStatus)
+        }
+        if (values.size() == 0) return false
         val rows = db.update(TABLE_ORDERS, values, "LOWER($COLUMN_KODE_PESANAN) = LOWER(?)", arrayOf(orderCode.trim()))
         return rows > 0
     }
