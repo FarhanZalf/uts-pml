@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Geocoder
@@ -105,6 +106,7 @@ class CheckoutActivity : AppCompatActivity() {
         setupGpsAndMapButtons()
         setupDateTimePickers()
         setupExtraCheckboxes()
+        setupPaymentMethodRadioGroup()
         calculateTotals()
         setupSubmitButton()
 
@@ -353,6 +355,22 @@ class CheckoutActivity : AppCompatActivity() {
         binding.cbCandles.setOnCheckedChangeListener { _, _ -> checkListener() }
     }
 
+    private fun setupPaymentMethodRadioGroup() {
+        binding.rgPaymentMethod.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rbPayQris -> {
+                    binding.tvPaymentMethodHint.text = "Scan kode QRIS instan di tab Lacak Pesanan setelah pesanan dibuat."
+                }
+                R.id.rbPayTransfer -> {
+                    binding.tvPaymentMethodHint.text = "Transfer ke BCA 812-0938-471 a.n Erles Bakery Kediri. Salin nomor rekening di layar pelacakan."
+                }
+                R.id.rbPayCash -> {
+                    binding.tvPaymentMethodHint.text = "Bayar tunai di kasir outlet Erles Bakery saat mengambil roti atau bayar tunai ke kurir."
+                }
+            }
+        }
+    }
+
     private fun calculateTotals() {
         subtotal = cartDbHelper.getTotalPrice()
         updateTotalViews()
@@ -408,7 +426,19 @@ class CheckoutActivity : AppCompatActivity() {
                 .putString(KEY_PHONE, phone)
                 .apply()
 
-            val notes = binding.etOrderNotes.text.toString().trim()
+            val selectedPaymentMethod = when {
+                binding.rbPayTransfer.isChecked -> "transfer"
+                binding.rbPayCash.isChecked -> "cash"
+                else -> "qris"
+            }
+            val paymentLabel = when (selectedPaymentMethod) {
+                "transfer" -> "Transfer BCA"
+                "cash" -> "Tunai saat Ambil"
+                else -> "QRIS Instan"
+            }
+
+            val rawNotes = binding.etOrderNotes.text.toString().trim()
+            val finalNotes = if (rawNotes.isNotEmpty()) "[Bayar: $paymentLabel] $rawNotes" else "[Bayar: $paymentLabel]"
             val finalAddress = if (binding.rbPickup.isChecked) "Outlet Erles Bakery - Jl. Mayor Bismo No. 27 Kediri" else address
             val isoDate = if (selectedDateIso.isNotEmpty()) selectedDateIso else SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().time)
 
@@ -421,7 +451,7 @@ class CheckoutActivity : AppCompatActivity() {
                 customerName = name,
                 customerPhone = phone,
                 address = finalAddress,
-                notes = notes,
+                notes = finalNotes,
                 pickupDate = isoDate,
                 cartItems = cartItems,
                 onSuccess = { createdOrder ->
@@ -434,10 +464,12 @@ class CheckoutActivity : AppCompatActivity() {
                         customerName = name,
                         customerPhone = phone,
                         address = finalAddress,
-                        notes = notes,
+                        notes = finalNotes,
                         pickupDate = "$selectedDateStr ($selectedTimeStr)",
                         totalPrice = grandTotal,
                         status = createdOrder.status,
+                        paymentStatus = createdOrder.paymentStatus.ifEmpty { "unpaid" },
+                        paymentMethod = selectedPaymentMethod,
                         createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time)
                     )
                     cartDbHelper.saveOrder(orderToSave)
@@ -447,7 +479,7 @@ class CheckoutActivity : AppCompatActivity() {
                     com.google.firebase.messaging.FirebaseMessaging.getInstance()
                         .subscribeToTopic("order_${createdOrder.orderCode}")
 
-                    showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true)
+                    showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true, paymentLabel = paymentLabel)
                 },
                 onError = { errorMsg ->
                     binding.btnSubmitOrder.isEnabled = true
@@ -463,23 +495,31 @@ class CheckoutActivity : AppCompatActivity() {
                         customerName = name,
                         customerPhone = phone,
                         address = finalAddress,
-                        notes = notes,
+                        notes = finalNotes,
                         pickupDate = "$selectedDateStr ($selectedTimeStr)",
                         totalPrice = grandTotal,
                         status = "pending",
+                        paymentStatus = "unpaid",
+                        paymentMethod = selectedPaymentMethod,
                         createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time)
                     )
                     cartDbHelper.saveOrder(fallbackOrder)
                     cartDbHelper.clearCart()
                     com.google.firebase.messaging.FirebaseMessaging.getInstance()
                         .subscribeToTopic("order_$fallbackCode")
-                    showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg)
+                    showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg, paymentLabel = paymentLabel)
                 }
             )
         }
     }
 
-    private fun showOrderSuccessDialog(orderCode: String, customerName: String, isServerSynced: Boolean = true, offlineNote: String = "") {
+    private fun showOrderSuccessDialog(
+        orderCode: String,
+        customerName: String,
+        isServerSynced: Boolean = true,
+        offlineNote: String = "",
+        paymentLabel: String = "QRIS"
+    ) {
         val syncBadge = if (isServerSynced) {
             "✓ Tersinkronisasi ke Web Admin ERP"
         } else {
@@ -491,19 +531,29 @@ class CheckoutActivity : AppCompatActivity() {
             Pesanan roti Anda telah berhasil dibuat.
             
             Kode Pesanan: $orderCode
-            Jadwal: $selectedDateStr ($selectedTimeStr)
-            Total: ${formatRupiah(grandTotal)}
-            
+            Metode Pembayaran: $paymentLabel
+            Total Tagihan: ${formatRupiah(grandTotal)}
             Status: Menunggu Konfirmasi (Pending)
             Koneksi: $syncBadge
+            
+            Silakan buka tab Pelacakan untuk melakukan pembayaran (QRIS / Transfer BCA).
         """.trimIndent()
 
         AlertDialog.Builder(this)
             .setTitle("Pesanan Berhasil Dibuat!")
             .setMessage(message)
             .setCancelable(false)
-            .setPositiveButton("Lihat Pesanan") { _, _ ->
-                Toast.makeText(this, "Pesanan berhasil dicatat & keranjang telah dikosongkan", Toast.LENGTH_SHORT).show()
+            .setPositiveButton("Bayar & Lacak Sekarang") { _, _ ->
+                val trackIntent = Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    putExtra("kode_pesanan", orderCode)
+                    putExtra(MainActivity.EXTRA_ORDER_CODE, orderCode)
+                    putExtra(MainActivity.EXTRA_OPEN_TRACK, true)
+                }
+                startActivity(trackIntent)
+                finish()
+            }
+            .setNegativeButton("Tutup") { _, _ ->
                 finish()
             }
             .show()

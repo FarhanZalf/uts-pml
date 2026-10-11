@@ -12,10 +12,8 @@ object ApiConfig {
     private const val PREFS_NAME = "erles_api_prefs"
     private const val KEY_BASE_URL = "pref_base_url"
 
-    // Host backend PC untuk pengujian HP fisik via Wi-Fi (melalui Vite Proxy port 5174 yang terbuka ke jaringan LAN):
-    // Jika via USB adb reverse, gunakan: http://127.0.0.1:8000/api
-    // Jika via Android Emulator, gunakan: http://10.0.2.2:8000/api
-    const val DEFAULT_BASE_URL = "http://127.0.0.1:8000/api"
+    // Host backend PC untuk pengujian HP fisik via Wi-Fi:
+    const val DEFAULT_BASE_URL = "http://192.168.1.78:8000/api"
 
     fun getBaseUrl(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -36,4 +34,7 @@ object ApiConfig {
 
     fun getTrackOrderUrl(context: Context, orderCode: String): String =
         "${getBaseUrl(context)}/orders/track/$orderCode"
+
+    fun getConfirmPaymentUrl(context: Context): String =
+        "${getBaseUrl(context)}/orders/pay"
 }

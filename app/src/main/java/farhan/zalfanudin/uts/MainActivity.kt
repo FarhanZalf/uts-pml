@@ -184,6 +184,10 @@ class MainActivity : AppCompatActivity() {
                 showHelpDialog()
                 return true
             }
+            R.id.action_server_settings -> {
+                showServerSettingsDialog()
+                return true
+            }
             R.id.action_refresh -> {
                 refreshCurrentFragment()
                 Toast.makeText(this, "Halaman berhasil disegarkan", Toast.LENGTH_SHORT).show()
@@ -191,6 +195,51 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun showServerSettingsDialog() {
+        val currentUrl = farhan.zalfanudin.uts.network.ApiConfig.getBaseUrl(this)
+
+        val input = android.widget.EditText(this).apply {
+            setText(currentUrl)
+            setSelection(text.length)
+            setSingleLine(true)
+            val padding = (14 * resources.displayMetrics.density).toInt()
+            setPadding(padding, padding, padding, padding)
+            setBackgroundResource(R.drawable.bg_search_bar)
+        }
+
+        val container = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            val pad = (20 * resources.displayMetrics.density).toInt()
+            setPadding(pad, 12, pad, 12)
+            addView(android.widget.TextView(this@MainActivity).apply {
+                text = "Pilih atau masukkan alamat URL Backend REST API:\n\n• USB Kabel / ADB Wireless:\n  http://127.0.0.1:8000/api\n\n• Wi-Fi LAN Laptop:\n  http://192.168.1.78:8000/api"
+                textSize = 12f
+                setTextColor(androidx.core.content.ContextCompat.getColor(this@MainActivity, R.color.text_secondary))
+                setPadding(0, 0, 0, (10 * resources.displayMetrics.density).toInt())
+            })
+            addView(input)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("⚙️ Pengaturan Server API")
+            .setView(container)
+            .setPositiveButton("Simpan") { _, _ ->
+                val newUrl = input.text.toString().trim()
+                if (newUrl.isNotEmpty()) {
+                    farhan.zalfanudin.uts.network.ApiConfig.setBaseUrl(this, newUrl)
+                    Toast.makeText(this, "Alamat Server disimpan:\n$newUrl", Toast.LENGTH_LONG).show()
+                    refreshCurrentFragment()
+                }
+            }
+            .setNeutralButton("Reset Default") { _, _ ->
+                farhan.zalfanudin.uts.network.ApiConfig.setBaseUrl(this, farhan.zalfanudin.uts.network.ApiConfig.DEFAULT_BASE_URL)
+                Toast.makeText(this, "Server direset ke:\n${farhan.zalfanudin.uts.network.ApiConfig.DEFAULT_BASE_URL}", Toast.LENGTH_SHORT).show()
+                refreshCurrentFragment()
+            }
+            .setNegativeButton("Batal", null)
+            .show()
     }
 
     private fun showLogoutConfirmationDialog(userName: String) {

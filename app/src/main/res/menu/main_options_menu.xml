@@ -25,6 +25,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_server_settings"
+        android:title="⚙️ Pengaturan Server API"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_refresh"
         android:title="Muat Ulang Halaman"
         app:showAsAction="never" />

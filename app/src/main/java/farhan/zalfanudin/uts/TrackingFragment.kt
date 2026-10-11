@@ -171,6 +171,13 @@ class TrackingFragment : Fragment() {
         // Tampilan Badge & Timeline Stepper sesuai status dan metode
         updateStatusViews(order)
 
+        // Tampilan Status & Aksi Pembayaran (QRIS, Transfer BCA, Tunai)
+        updatePaymentViews(order)
+
+        binding.btnPayOrder.setOnClickListener {
+            showPaymentDialog(order)
+        }
+
         // Tombol Batalkan Pesanan: HANYA muncul jika status masih 'pending' (menunggu konfirmasi toko)
         if (statusClean == "pending") {
             binding.btnCancelOrder.visibility = View.VISIBLE
@@ -202,6 +209,32 @@ class TrackingFragment : Fragment() {
         listenToOrderStatusRealtime(order.orderCode)
     }
 
+    private fun updatePaymentViews(order: Order) {
+        if (order.isPaid) {
+            binding.tvTrackPaymentBadge.text = "LUNAS ✓"
+            binding.tvTrackPaymentBadge.setBackgroundResource(R.drawable.bg_badge_success)
+            binding.tvTrackPaymentBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_green))
+
+            binding.btnPayOrder.visibility = View.GONE
+            binding.layoutPaymentPaidNotice.visibility = View.VISIBLE
+        } else {
+            val statusClean = order.paymentStatus.lowercase(Locale.getDefault())
+            if (statusClean == "partial" || statusClean == "sebagian") {
+                binding.tvTrackPaymentBadge.text = "Sebagian (DP)"
+                binding.tvTrackPaymentBadge.setBackgroundResource(R.drawable.bg_badge_pending)
+                binding.tvTrackPaymentBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_amber))
+            } else {
+                binding.tvTrackPaymentBadge.text = "Belum Dibayar"
+                binding.tvTrackPaymentBadge.setBackgroundResource(R.drawable.bg_badge_pending)
+                binding.tvTrackPaymentBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_red))
+            }
+
+            binding.btnPayOrder.visibility = View.VISIBLE
+            binding.btnPayOrder.text = "💳 Bayar Sekarang (QRIS / Transfer BCA)"
+            binding.layoutPaymentPaidNotice.visibility = View.GONE
+        }
+    }
+
     private fun listenToOrderStatusRealtime(orderCode: String) {
         firestoreListener?.remove()
         firestoreListener = null
@@ -220,12 +253,23 @@ class TrackingFragment : Fragment() {
                     binding.tvRealtimeIndicator.visibility = View.VISIBLE
 
                     val newStatus = snapshot.getString("status")
-                    if (!newStatus.isNullOrEmpty() && newStatus.lowercase(Locale.getDefault()) != currentDisplayedOrder?.status?.lowercase(Locale.getDefault())) {
-                        cartDbHelper.updateOrderStatus(orderCode, newStatus)
+                    val newPaymentStatus = snapshot.getString("payment_status")
+
+                    val statusChanged = !newStatus.isNullOrEmpty() && newStatus.lowercase(Locale.getDefault()) != currentDisplayedOrder?.status?.lowercase(Locale.getDefault())
+                    val paymentChanged = !newPaymentStatus.isNullOrEmpty() && newPaymentStatus.lowercase(Locale.getDefault()) != currentDisplayedOrder?.paymentStatus?.lowercase(Locale.getDefault())
+
+                    if (statusChanged || paymentChanged) {
+                        // Jangan timpa status lokal jika lokal sudah lunas tetapi snapshot Firestore lama masih unpaid
+                        if (currentDisplayedOrder?.isPaid == true && (newPaymentStatus == "unpaid" || newPaymentStatus == "belum bayar")) {
+                            return@addSnapshotListener
+                        }
+
+                        cartDbHelper.updateOrderStatusAndPayment(orderCode, newStatus, newPaymentStatus)
                         val refreshed = cartDbHelper.getOrderByCode(orderCode)
                         if (refreshed != null) {
                             currentDisplayedOrder = refreshed
                             updateStatusViews(refreshed)
+                            updatePaymentViews(refreshed)
                             populateOrderHistoryList(cartDbHelper.getAllOrders())
                         }
                     }
@@ -244,15 +288,44 @@ class TrackingFragment : Fragment() {
                 if (_binding != null && isAdded) {
                     val currentStatus = currentDisplayedOrder?.status?.lowercase(Locale.getDefault())
                     val newStatus = serverOrder.status.lowercase(Locale.getDefault())
-                    if (currentStatus != newStatus) {
-                        cartDbHelper.updateOrderStatus(serverOrder.orderCode, serverOrder.status)
+
+                    val currentPay = currentDisplayedOrder?.paymentStatus?.lowercase(Locale.getDefault())
+                    val newPay = serverOrder.paymentStatus.lowercase(Locale.getDefault())
+
+                    // Jika pesanan sudah dibayar di HP tapi server masih unpaid, sinkronkan otomatis ke server
+                    if ((currentPay == "paid" || currentPay == "lunas") && (newPay == "unpaid" || newPay == "belum bayar")) {
+                        farhan.zalfanudin.uts.network.ApiService.confirmPayment(
+                            context = requireContext(),
+                            orderCode = serverOrder.orderCode,
+                            amount = serverOrder.totalPrice,
+                            method = "qris",
+                            onSuccess = { syncedOrder ->
+                                if (_binding != null && isAdded) {
+                                    cartDbHelper.updateOrderPaymentStatus(syncedOrder.orderCode, syncedOrder.paymentStatus)
+                                    val refreshed = cartDbHelper.getOrderByCode(syncedOrder.orderCode) ?: syncedOrder
+                                    currentDisplayedOrder = refreshed
+                                    updatePaymentViews(refreshed)
+                                    populateOrderHistoryList(cartDbHelper.getAllOrders())
+                                }
+                            },
+                            onError = { /* Biarkan tetap tersimpan di lokal */ }
+                        )
+                        return@trackOrder
+                    }
+
+                    val statusChanged = currentStatus != newStatus
+                    val paymentChanged = currentPay != newPay
+
+                    if (statusChanged || paymentChanged) {
+                        cartDbHelper.updateOrderStatusAndPayment(serverOrder.orderCode, serverOrder.status, serverOrder.paymentStatus)
                         val refreshed = cartDbHelper.getOrderByCode(serverOrder.orderCode) ?: serverOrder
                         currentDisplayedOrder = refreshed
                         updateStatusViews(refreshed)
+                        updatePaymentViews(refreshed)
                         populateOrderHistoryList(cartDbHelper.getAllOrders())
                         Toast.makeText(
                             requireContext(),
-                            "Status diperbarui oleh Web Admin: ${serverOrder.status.uppercase(Locale.getDefault())}",
+                            "Status diperbarui oleh Web Admin: ${serverOrder.status.uppercase(Locale.getDefault())} (${serverOrder.paymentStatus.uppercase(Locale.getDefault())})",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -458,6 +531,16 @@ class TrackingFragment : Fragment() {
                 }
             }
 
+            if (order.isPaid) {
+                itemBinding.tvItemOrderPaymentStatus.text = "Lunas ✓"
+                itemBinding.tvItemOrderPaymentStatus.setBackgroundResource(R.drawable.bg_badge_success)
+                itemBinding.tvItemOrderPaymentStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_green))
+            } else {
+                itemBinding.tvItemOrderPaymentStatus.text = "Belum Bayar"
+                itemBinding.tvItemOrderPaymentStatus.setBackgroundResource(R.drawable.bg_badge_cancelled)
+                itemBinding.tvItemOrderPaymentStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_red))
+            }
+
             if (order.notes.isNotEmpty()) {
                 itemBinding.tvItemOrderNotes.visibility = View.VISIBLE
                 itemBinding.tvItemOrderNotes.text = "Catatan: ${order.notes}"
@@ -476,6 +559,166 @@ class TrackingFragment : Fragment() {
 
     private fun formatRupiah(amount: Double): String {
         return "Rp " + NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).format(amount.toLong())
+    }
+
+    // Menampilkan Dialog Pembayaran Lengkap (QRIS, Bank BCA, Tunai)
+    private fun showPaymentDialog(order: Order) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_payment, null)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val tvOrderCode = dialogView.findViewById<TextView>(R.id.tvPaymentDialogOrderCode)
+        val tvAmount = dialogView.findViewById<TextView>(R.id.tvPaymentDialogAmount)
+        val btnClose = dialogView.findViewById<ImageButton>(R.id.btnPaymentDialogClose)
+
+        val rgTabs = dialogView.findViewById<android.widget.RadioGroup>(R.id.rgPaymentTabs)
+        val rbQris = dialogView.findViewById<android.widget.RadioButton>(R.id.rbTabQris)
+        val rbBca = dialogView.findViewById<android.widget.RadioButton>(R.id.rbTabBca)
+        val rbCash = dialogView.findViewById<android.widget.RadioButton>(R.id.rbTabCash)
+
+        val layoutQris = dialogView.findViewById<View>(R.id.layoutContentQris)
+        val layoutBca = dialogView.findViewById<View>(R.id.layoutContentBca)
+        val layoutCash = dialogView.findViewById<View>(R.id.layoutContentCash)
+        val ivQris = dialogView.findViewById<android.widget.ImageView>(R.id.ivQrisBitmap)
+
+        val btnCopyBca = dialogView.findViewById<Button>(R.id.btnCopyBcaNumber)
+        val btnSendWa = dialogView.findViewById<Button>(R.id.btnPaymentSendWa)
+        val btnMarkPaid = dialogView.findViewById<Button>(R.id.btnPaymentMarkPaid)
+
+        tvOrderCode.text = "Kode Pesanan: ${order.orderCode}"
+        tvAmount.text = formatRupiah(order.totalPrice)
+
+        // Generate QRIS Bitmap instan via ZXing
+        val qrisPayload = "00020101021226670016ID.CO.ERLESBAKERY.WWW01189360099900000000015204581253360360540${order.totalPrice.toInt()}5802ID5912ERLES BAKERY6006KEDIRI6304${order.orderCode}"
+        val qrBitmap = QRCodeUtil.generateQRCode(qrisPayload, 500)
+        if (qrBitmap != null) {
+            ivQris.setImageBitmap(qrBitmap)
+        }
+
+        // Tab selection logic
+        rgTabs.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.rbTabQris -> {
+                    layoutQris.visibility = View.VISIBLE
+                    layoutBca.visibility = View.GONE
+                    layoutCash.visibility = View.GONE
+
+                    rbQris.setBackgroundResource(R.drawable.bg_badge_category)
+                    rbQris.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_dark))
+                    rbBca.setBackgroundResource(R.drawable.bg_search_bar)
+                    rbBca.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+                    rbCash.setBackgroundResource(R.drawable.bg_search_bar)
+                    rbCash.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+                }
+                R.id.rbTabBca -> {
+                    layoutQris.visibility = View.GONE
+                    layoutBca.visibility = View.VISIBLE
+                    layoutCash.visibility = View.GONE
+
+                    rbBca.setBackgroundResource(R.drawable.bg_badge_category)
+                    rbBca.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_dark))
+                    rbQris.setBackgroundResource(R.drawable.bg_search_bar)
+                    rbQris.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+                    rbCash.setBackgroundResource(R.drawable.bg_search_bar)
+                    rbCash.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+                }
+                R.id.rbTabCash -> {
+                    layoutQris.visibility = View.GONE
+                    layoutBca.visibility = View.GONE
+                    layoutCash.visibility = View.VISIBLE
+
+                    rbCash.setBackgroundResource(R.drawable.bg_badge_category)
+                    rbCash.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_dark))
+                    rbQris.setBackgroundResource(R.drawable.bg_search_bar)
+                    rbQris.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+                    rbBca.setBackgroundResource(R.drawable.bg_search_bar)
+                    rbBca.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+                }
+            }
+        }
+
+        // Salin nomor rekening BCA
+        btnCopyBca.setOnClickListener {
+            val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("No Rekening BCA", "8120938471")
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(requireContext(), "Nomor rekening BCA (8120938471) berhasil disalin!", Toast.LENGTH_SHORT).show()
+        }
+
+        // Kirim konfirmasi pembayaran via WhatsApp ke Kasir
+        btnSendWa.setOnClickListener {
+            val msg = "Halo Kasir Erles Bakery, saya ingin mengonfirmasi pembayaran untuk pesanan *${order.orderCode}* atas nama *${order.customerName}* sebesar *${formatRupiah(order.totalPrice)}*. Mohon diverifikasi ya."
+            try {
+                val encoded = URLEncoder.encode(msg, "UTF-8")
+                val waIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/send?phone=6281234567890&text=$encoded"))
+                startActivity(waIntent)
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Aplikasi WhatsApp tidak ditemukan", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Tandai sudah bayar oleh pembeli & sinkronkan langsung ke Backend Web Admin ERP
+        btnMarkPaid.setOnClickListener {
+            val paymentMethod = when {
+                rbBca.isChecked -> "transfer"
+                rbCash.isChecked -> "tunai"
+                else -> "qris"
+            }
+
+            btnMarkPaid.isEnabled = false
+            btnMarkPaid.text = "Mengirim Pembayaran ke Web..."
+
+            // 1. Simpan ke SQLite lokal agar UI instan menampilkan status LUNAS
+            cartDbHelper.updateOrderPaymentStatus(order.orderCode, "paid")
+            val refreshed = cartDbHelper.getOrderByCode(order.orderCode)
+            if (refreshed != null) {
+                currentDisplayedOrder = refreshed
+                updatePaymentViews(refreshed)
+                populateOrderHistoryList(cartDbHelper.getAllOrders())
+            }
+
+            // 2. Kirim ke REST API Backend Laravel ERP agar tercatat di Web Admin & Database MySQL
+            farhan.zalfanudin.uts.network.ApiService.confirmPayment(
+                context = requireContext(),
+                orderCode = order.orderCode,
+                amount = order.totalPrice,
+                method = paymentMethod,
+                onSuccess = { serverOrder ->
+                    if (_binding != null && isAdded) {
+                        cartDbHelper.updateOrderPaymentStatus(serverOrder.orderCode, serverOrder.paymentStatus)
+                        val updated = cartDbHelper.getOrderByCode(serverOrder.orderCode) ?: serverOrder
+                        currentDisplayedOrder = updated
+                        updatePaymentViews(updated)
+                        populateOrderHistoryList(cartDbHelper.getAllOrders())
+                        Toast.makeText(
+                            requireContext(),
+                            "Pembayaran berhasil dicatat & disinkronkan ke Web Admin!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    dialog.dismiss()
+                },
+                onError = { err ->
+                    if (_binding != null && isAdded) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Pembayaran tersimpan di HP. Catatan server: $err",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    dialog.dismiss()
+                }
+            )
+        }
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     // Tampilkan Lokasi Outlet Toko di Peta OSM

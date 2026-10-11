@@ -98,6 +98,11 @@ class MenuFragment : Fragment() {
         )
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadProductsFromApi()
+    }
+
     // 1. Setup ListView Produk
     private fun setupListView() {
         displayedProducts = allProducts.toMutableList()
@@ -111,6 +116,10 @@ class MenuFragment : Fragment() {
             },
             // Saat tombol + Beli diklik: Langsung masuk ke keranjang tanpa ganti halaman
             onAddToCartClick = { product ->
+                if (product.stock <= 0) {
+                    Toast.makeText(requireContext(), "Maaf, stok ${product.name} sedang habis!", Toast.LENGTH_SHORT).show()
+                    return@ProductAdapter
+                }
                 cartDbHelper.addToCart(product, 1)
                 (activity as? MainActivity)?.updateCartBadge()
                 Toast.makeText(
