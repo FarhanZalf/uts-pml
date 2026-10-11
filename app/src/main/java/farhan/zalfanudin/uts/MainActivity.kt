@@ -139,6 +139,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         updateCartBadge()
         invalidateOptionsMenu()
+        PromoTrigger.fire(this)
     }
 
     // --- IMPLEMENTASI OPTIONSMENU (Poin Penilaian Dosen #10: OptionsMenu 1%) ---
