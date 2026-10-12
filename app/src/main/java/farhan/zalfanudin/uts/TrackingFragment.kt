@@ -43,7 +43,7 @@ class TrackingFragment : Fragment() {
     private var currentDisplayedOrder: Order? = null
     private var firestoreListener: com.google.firebase.firestore.ListenerRegistration? = null
 
-    // Poin UTS #20: Kamera, #26: Gallery & #33: Supabase Storage
+    // #20, #26 & #33: Pengambilan foto dari Kamera, Galeri dan Supabase Storage
     private var cameraPhotoUri: Uri? = null
 
     private val pickPaymentProofLauncher = registerForActivityResult(
@@ -126,11 +126,9 @@ class TrackingFragment : Fragment() {
 
         if (orders.isEmpty()) {
             binding.cardTrackingDetail.visibility = View.GONE
-            binding.panelDemoTesting.visibility = View.GONE
             binding.layoutHistoryEmpty.visibility = View.VISIBLE
         } else {
             binding.layoutHistoryEmpty.visibility = View.GONE
-            binding.panelDemoTesting.visibility = View.VISIBLE
 
             // Otomatis menampilkan pesanan paling baru jika belum ada yang dipilih
             if (currentDisplayedOrder == null) {
@@ -150,7 +148,6 @@ class TrackingFragment : Fragment() {
     private fun displayOrderDetail(order: Order) {
         currentDisplayedOrder = order
         binding.cardTrackingDetail.visibility = View.VISIBLE
-        binding.panelDemoTesting.visibility = View.VISIBLE
 
         binding.tvTrackDetailCode.text = order.orderCode
         binding.tvTrackDetailCustomer.text = "Pemesan: ${order.customerName} (${order.customerPhone})"
@@ -167,7 +164,7 @@ class TrackingFragment : Fragment() {
         // DIFERENSIASI METODE PENGIRIMAN: Ambil di Toko (Pickup) vs Diantar Kurir (Delivery)
         if (order.isPickup) {
             // Mode Ambil Sendiri di Toko
-            binding.tvTrackDeliveryMethod.text = "🏪 Ambil di Toko"
+            binding.tvTrackDeliveryMethod.text = "Ambil di Toko"
             binding.tvTrackDeliveryMethod.setBackgroundResource(R.drawable.bg_badge_category)
             binding.tvTrackDeliveryMethod.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary_dark))
             binding.tvTrackDetailAddress.text = "Lokasi Pengambilan: Outlet Erles Bakery (Jl. Mayor Bismo No. 27 Kediri)"
@@ -188,7 +185,7 @@ class TrackingFragment : Fragment() {
             binding.btnContactKasirWa.text = "Hubungi Kasir Toko via WhatsApp"
         } else {
             // Mode Diantar Kurir
-            binding.tvTrackDeliveryMethod.text = "🛵 Diantar Kurir"
+            binding.tvTrackDeliveryMethod.text = "Diantar Kurir"
             binding.tvTrackDeliveryMethod.setBackgroundResource(R.drawable.bg_badge_process)
             binding.tvTrackDeliveryMethod.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_blue))
             binding.tvTrackDetailAddress.text = "Alamat Pengantaran: ${order.address}"
@@ -222,7 +219,7 @@ class TrackingFragment : Fragment() {
             showPaymentDialog(order)
         }
 
-        // Poin UTS #20: Kamera, #26: Gallery & #33: Supabase Storage
+        // #20, #26 & #33: Pengambilan foto dari Kamera, Galeri dan Supabase Storage
         binding.btnUploadPaymentProof.setOnClickListener {
             showUploadProofSourceDialog(order)
         }
@@ -242,16 +239,11 @@ class TrackingFragment : Fragment() {
             openWhatsAppChat(order)
         }
 
-        // Tombol Khusus Pengujian Dosen: Simulasi Update Status Kasir
-        binding.btnSimulateNextStatus.setOnClickListener {
-            simulateNextStatus(order)
-        }
-
         // Subscribe ke topic FCM saat layar pelacakan dibuka (LANGKAH 5)
         com.google.firebase.messaging.FirebaseMessaging.getInstance()
             .subscribeToTopic("order_${order.orderCode}")
 
-        // Sinkronisasi status pesanan terbaru dari Web Admin ERP via Volley (Poin UTS #18 & #19)
+        // #18 & #19: Sinkronisasi status pesanan terbaru dari Web Admin ERP via Volley
         syncOrderWithServer(order.orderCode)
 
         // Pasang Snapshot Listener Firestore realtime (LANGKAH 4)
@@ -266,7 +258,7 @@ class TrackingFragment : Fragment() {
 
             binding.btnPayOrder.visibility = View.GONE
             binding.layoutPaymentPaidNotice.visibility = View.VISIBLE
-            binding.btnUploadPaymentProof.text = "📤 Ganti Bukti Transfer (Kamera / Galeri)"
+            binding.btnUploadPaymentProof.text = "Ganti Bukti Transfer (Kamera / Galeri)"
         } else {
             val statusClean = order.paymentStatus.lowercase(Locale.getDefault())
             if (statusClean == "partial" || statusClean == "sebagian") {
@@ -280,24 +272,24 @@ class TrackingFragment : Fragment() {
             }
 
             binding.btnPayOrder.visibility = View.VISIBLE
-            binding.btnPayOrder.text = "💳 Bayar Sekarang (QRIS / Transfer BCA)"
+            binding.btnPayOrder.text = "Bayar Sekarang (QRIS / Transfer BCA)"
             binding.layoutPaymentPaidNotice.visibility = View.GONE
-            binding.btnUploadPaymentProof.text = "📤 Unggah Bukti Transfer (Kamera / Galeri)"
+            binding.btnUploadPaymentProof.text = "Unggah Bukti Transfer (Kamera / Galeri)"
         }
     }
 
-    // Dialog Pemilihan Sumber: Kamera HP (Poin #20) atau Galeri (Poin #26)
+    // #20 & #26: Dialog Pemilihan Sumber Kamera HP atau Galeri
     private fun showUploadProofSourceDialog(order: Order) {
         val options = arrayOf(
-            "📸 Ambil Foto Struk (Kamera HP)",
-            "🖼️ Pilih dari Galeri HP (Screenshot / File)"
+            "Ambil Foto Struk (Kamera HP)",
+            "Pilih dari Galeri HP (Screenshot / File)"
         )
         AlertDialog.Builder(requireContext())
             .setTitle("Pilih Sumber Bukti Pembayaran")
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> {
-                        // Kamera Langsung (Poin UTS #20)
+                        // #20: Kamera Langsung
                         if (ContextCompat.checkSelfPermission(
                                 requireContext(),
                                 Manifest.permission.CAMERA
@@ -309,7 +301,7 @@ class TrackingFragment : Fragment() {
                         }
                     }
                     1 -> {
-                        // Galeri HP (Poin UTS #26)
+                        // #26: Galeri HP
                         pickPaymentProofLauncher.launch("image/*")
                     }
                 }
@@ -318,7 +310,7 @@ class TrackingFragment : Fragment() {
             .show()
     }
 
-    // Meluncurkan Kamera HP dengan FileProvider (Poin UTS #20)
+    // #20: Meluncurkan Kamera HP dengan FileProvider
     private fun launchCamera() {
         try {
             val context = requireContext()
@@ -335,7 +327,7 @@ class TrackingFragment : Fragment() {
         }
     }
 
-    // Mengunggah file struk/bukti bayar dari Kamera / Galeri ke Supabase Storage (Poin #33, #20, #26)
+    // #33, #20 & #26: Mengunggah file struk/bukti bayar ke Supabase Storage
     private fun uploadProofToSupabase(uri: Uri, order: Order) {
         farhan.zalfanudin.uts.util.SupabaseStorageUtil.uploadPaymentProof(
             context = requireContext(),
@@ -350,12 +342,12 @@ class TrackingFragment : Fragment() {
                 if (_binding == null || !isAdded) return@uploadPaymentProof
                 binding.pbUploadProof.visibility = View.GONE
                 binding.btnUploadPaymentProof.isEnabled = true
-                binding.btnUploadPaymentProof.text = "📤 Ganti Bukti Transfer (Kamera / Galeri)"
+                binding.btnUploadPaymentProof.text = "Ganti Bukti Transfer (Kamera / Galeri)"
 
                 // Tampilkan foto pratinjau struk transfer
                 binding.layoutProofPreview.visibility = View.VISIBLE
                 binding.ivProofThumbnail.setImageBitmap(bitmap)
-                binding.tvProofStatus.text = "✅ Bukti Tersimpan di Supabase:\n$publicUrl"
+                binding.tvProofStatus.text = "Bukti Tersimpan di Supabase:\n$publicUrl"
 
                 // Update status pembayaran lokal di SQLite
                 cartDbHelper.updateOrderPaymentStatus(order.orderCode, "paid")
@@ -388,13 +380,13 @@ class TrackingFragment : Fragment() {
                 if (_binding == null || !isAdded) return@uploadPaymentProof
                 binding.pbUploadProof.visibility = View.GONE
                 binding.btnUploadPaymentProof.isEnabled = true
-                binding.btnUploadPaymentProof.text = "📤 Ganti Bukti Transfer (Kamera / Galeri)"
+                binding.btnUploadPaymentProof.text = "Ganti Bukti Transfer (Kamera / Galeri)"
 
                 if (fallbackBitmap != null) {
-                    // Tampilkan pratinjau foto secara lokal agar demo dosen tetap lancar
+                    // Tampilkan pratinjau foto secara lokal
                     binding.layoutProofPreview.visibility = View.VISIBLE
                     binding.ivProofThumbnail.setImageBitmap(fallbackBitmap)
-                    binding.tvProofStatus.text = "✅ Bukti Tersimpan di Perangkat (Lokal):\n$errorMsg"
+                    binding.tvProofStatus.text = "Bukti Tersimpan di Perangkat (Lokal):\n$errorMsg"
 
                     // Tetap perbarui status pembayaran lokal di SQLite
                     cartDbHelper.updateOrderPaymentStatus(order.orderCode, "paid")
@@ -623,30 +615,6 @@ class TrackingFragment : Fragment() {
         }
     }
 
-    private fun simulateNextStatus(order: Order) {
-        val nextStatus = when (order.status.lowercase(Locale.getDefault())) {
-            "pending" -> "diproses"
-            "diproses" -> "siap"
-            "siap" -> "selesai"
-            "dibatalkan" -> "pending"
-            else -> "pending"
-        }
-
-        cartDbHelper.updateOrderStatus(order.orderCode, nextStatus)
-        try {
-            com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                .collection("order_status").document(order.orderCode)
-                .update("status", nextStatus)
-        } catch (_: Exception) {}
-        Toast.makeText(requireContext(), "Status diubah ke: $nextStatus (Simulasi Dosen)", Toast.LENGTH_SHORT).show()
-
-        val updatedOrder = cartDbHelper.getOrderByCode(order.orderCode)
-        if (updatedOrder != null) {
-            displayOrderDetail(updatedOrder)
-            populateOrderHistoryList(cartDbHelper.getAllOrders())
-        }
-    }
-
     private fun openWhatsAppChat(order: Order) {
         val message = if (order.isPickup) {
             "Halo Kasir Erles Bakery, saya ingin konfirmasi pesanan Ambil di Toko dengan kode ${order.orderCode} atas nama ${order.customerName}."
@@ -656,7 +624,7 @@ class TrackingFragment : Fragment() {
 
         try {
             val encodedMsg = URLEncoder.encode(message, "UTF-8")
-            val uri = Uri.parse("https://api.whatsapp.com/send?phone=6281234567890&text=$encodedMsg")
+            val uri = Uri.parse("https://api.whatsapp.com/send?phone=6285717224420&text=$encodedMsg")
             val intent = Intent(Intent.ACTION_VIEW, uri)
             startActivity(intent)
         } catch (_: Exception) {
@@ -859,7 +827,7 @@ class TrackingFragment : Fragment() {
             val msg = "Halo Kasir Erles Bakery, saya ingin mengonfirmasi pembayaran untuk pesanan *${order.orderCode}* atas nama *${order.customerName}* sebesar *${formatRupiah(order.totalPrice)}*. Mohon diverifikasi ya."
             try {
                 val encoded = URLEncoder.encode(msg, "UTF-8")
-                val waIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/send?phone=6281234567890&text=$encoded"))
+                val waIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api.whatsapp.com/send?phone=6285717224420&text=$encoded"))
                 startActivity(waIntent)
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Aplikasi WhatsApp tidak ditemukan", Toast.LENGTH_SHORT).show()

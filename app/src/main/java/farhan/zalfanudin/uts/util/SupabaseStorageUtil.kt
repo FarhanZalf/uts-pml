@@ -22,8 +22,7 @@ object SupabaseStorageUtil {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     /**
-     * Mengunggah file gambar bukti pembayaran ke Supabase Storage Bucket 'bukti-pembayaran'
-     * Memenuhi Poin UTS #33: Supabase Storage (7%) & #26: Gallery (1%)
+     * #33 & #26: Pengunggahan bukti transfer ke Supabase Storage
      */
     fun uploadPaymentProof(
         context: Context,

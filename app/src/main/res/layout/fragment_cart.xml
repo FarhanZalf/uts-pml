@@ -112,7 +112,7 @@
             app:cornerRadius="12dp" />
     </LinearLayout>
 
-    <!-- ListView Daftar Item Keranjang (Poin Dosen: ListView & ContextMenu) -->
+    <!-- #8 & #11: ListView Daftar Item Keranjang & ContextMenu -->
     <ListView
         android:id="@+id/lvCart"
         android:layout_width="match_parent"

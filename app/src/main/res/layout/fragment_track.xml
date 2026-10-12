@@ -339,7 +339,7 @@
                         android:drawablePadding="8dp"
                         android:paddingStart="14dp"
                         android:paddingEnd="14dp"
-                        android:text="💳 Bayar Sekarang (QRIS / Transfer BCA)"
+                        android:text="Bayar Sekarang (QRIS / Transfer BCA)"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
                         android:textSize="13sp"
@@ -374,7 +374,7 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <!-- FITUR SUPABASE STORAGE & GALLERY (POIN UTS #33 & #26) -->
+                    <!-- #20, #26 & #33: Bukti transfer kamera, galeri, dan storage -->
                     <LinearLayout
                         android:id="@+id/layoutUploadProofSection"
                         android:layout_width="match_parent"
@@ -387,7 +387,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="42dp"
                             android:background="@drawable/bg_button_secondary"
-                            android:text="📤 Unggah Bukti Transfer (Kamera / Galeri)"
+                            android:text="Unggah Bukti Transfer (Kamera / Galeri)"
                             android:textAllCaps="false"
                             android:textColor="@color/primary_dark"
                             android:textSize="12sp"
@@ -416,7 +416,7 @@
                                 android:id="@+id/tvProofStatus"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="✅ Bukti Transfer Tersimpan di Supabase Storage:"
+                                android:text="Bukti Transfer Tersimpan di Supabase Storage:"
                                 android:textColor="@color/status_green"
                                 android:textSize="11sp"
                                 android:textStyle="bold" />
@@ -441,7 +441,7 @@
                 android:layout_marginBottom="12dp"
                 android:background="@color/border_soft" />
 
-            <!-- SEKSI KHUSUS PICKUP: QR CODE TIKET KASIR (Poin Penilaian Dosen #25) -->
+            <!-- #25: QR-Code tiket kasir -->
             <LinearLayout
                 android:id="@+id/layoutQrCodeContainer"
                 android:layout_width="match_parent"
@@ -474,7 +474,7 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
 
-                <!-- Tombol Lihat Lokasi Outlet di Peta OSM (Poin Dosen #22) -->
+                <!-- #22: Tombol Lihat Lokasi Outlet di Peta OSM -->
                 <Button
                     android:id="@+id/btnViewBakeryLocation"
                     style="@style/Widget.Material3.Button.OutlinedButton"
@@ -504,7 +504,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🛵 PENGANTARAN OLEH KURIR TOKO"
+                    android:text="PENGANTARAN OLEH KURIR TOKO"
                     android:textColor="@color/status_blue"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -526,7 +526,7 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
 
-                <!-- Tombol Lihat Rute Pengantaran di Peta OSM (Poin Dosen #22) -->
+                <!-- #22: Tombol Lihat Rute Pengantaran di Peta OSM -->
                 <Button
                     android:id="@+id/btnViewDeliveryRoute"
                     style="@style/Widget.Material3.Button.OutlinedButton"
@@ -581,48 +581,7 @@
 
         </LinearLayout>
 
-        <!-- KARTU 2: PANEL PENGUJIAN DOSEN (SIMULASI KASIR) -->
-        <LinearLayout
-            android:id="@+id/panelDemoTesting"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:background="@drawable/bg_badge_category"
-            android:orientation="vertical"
-            android:padding="14dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🧪 Panel Pengujian Dosen (Simulasi Status)"
-                android:textColor="@color/primary_dark"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Gunakan tombol ini saat presentasi demo UTS untuk mensimulasikan perubahan status dari dapur/kasir (Pending ➔ Diproses ➔ Siap/Diantar ➔ Selesai)."
-                android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
-
-            <Button
-                android:id="@+id/btnSimulateNextStatus"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="42dp"
-                android:layout_marginTop="8dp"
-                android:text="Simulasi Update Status Kasir/Dapur (Demo)"
-                android:textAllCaps="false"
-                android:textColor="@color/primary_dark"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-
-
-        <!-- KARTU 4: DAFTAR SEMUA RIWAYAT PESANAN (SQLite orders_history) -->
+        <!-- DAFTAR SEMUA RIWAYAT PESANAN (SQLite orders_history) -->
         <TextView
             android:id="@+id/tvHistoryHeaderTitle"
             android:layout_width="wrap_content"

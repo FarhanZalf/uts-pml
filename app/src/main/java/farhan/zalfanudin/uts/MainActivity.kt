@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         ErlesFirebaseMessagingService.createNotificationChannel(this)
         checkNotificationPermission()
 
-        // 1. Setup Toolbar & OptionsMenu (Poin Penilaian Dosen: OptionsMenu)
+        // #10: Setup Toolbar & OptionsMenu
         setSupportActionBar(binding.topToolbar)
 
         // Pastikan status bar (jam, baterai) terlihat jelas dengan warna gelap di atas background terang
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
             loadFragment(MenuFragment())
         }
 
-        // Listener klik BottomNavigationView untuk berganti fragment (Poin: BottomNavigationView & FrameLayout)
+        // #13, #14 & #15: Navigasi BottomNavigationView dan FrameLayout Fragment
         binding.bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_menu -> {
@@ -142,7 +142,7 @@ class MainActivity : AppCompatActivity() {
         PromoTrigger.fire(this)
     }
 
-    // --- IMPLEMENTASI OPTIONSMENU (Poin Penilaian Dosen #10: OptionsMenu 1%) ---
+    // #10: OptionsMenu toolbar utama
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_options_menu, menu)
@@ -154,9 +154,9 @@ class MainActivity : AppCompatActivity() {
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
             val nameOrEmail = currentUser.displayName ?: currentUser.email?.substringBefore("@") ?: "Pelanggan"
-            authItem?.title = "👤 $nameOrEmail (Keluar)"
+            authItem?.title = "$nameOrEmail (Keluar)"
         } else {
-            authItem?.title = "🔑 Masuk / Daftar Akun"
+            authItem?.title = "Masuk / Daftar Akun"
         }
         return super.onPrepareOptionsMenu(menu)
     }
@@ -223,7 +223,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         AlertDialog.Builder(this)
-            .setTitle("⚙️ Pengaturan Server API")
+            .setTitle("Pengaturan Server API")
             .setView(container)
             .setPositiveButton("Simpan") { _, _ ->
                 val newUrl = input.text.toString().trim()
@@ -257,16 +257,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAboutDialog() {
         val info = """
-            🍰 Erles Bakery Publik
+            Erles Bakery Publik
             Aplikasi Pemesanan Roti & Kue Pelanggan
             
-            👤 Tim Pengembang:
-            1. Mochamad Farhan Zalfanudin
+            Nama Kelompok:
+            1. Daffa Raditya Anugrah
             2. Chelsea Cinta An Anlisty
+            3. Mochamad Farhan Zalfanudin
             
-            🎓 Mata Kuliah: Pemrograman Mobile Lanjut (PML)
-            👨‍🏫 Dosen Pengampu: Benni Agung Nugroho, S.Kom., M.Cs.
-            📍 PSDKU Kota Kediri - Politeknik Negeri Malang
+            Mata Kuliah: Pemrograman Mobile Lanjut (PML)
+            Dosen Pengampu: Benni Agung Nugroho, S.Kom., M.Cs.
+            PSDKU Kota Kediri - Politeknik Negeri Malang
             
             Versi Aplikasi: 1.0 (UTS PML Edition)
         """.trimIndent()
@@ -282,7 +283,7 @@ class MainActivity : AppCompatActivity() {
         val message = "Halo CS Erles Bakery, saya ingin bertanya seputar pemesanan roti di aplikasi mobile."
         try {
             val encodedMsg = URLEncoder.encode(message, "UTF-8")
-            val uri = Uri.parse("https://api.whatsapp.com/send?phone=6281234567890&text=$encodedMsg")
+            val uri = Uri.parse("https://api.whatsapp.com/send?phone=6285717224420&text=$encodedMsg")
             val intent = Intent(Intent.ACTION_VIEW, uri)
             startActivity(intent)
         } catch (_: Exception) {
@@ -292,14 +293,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun showHelpDialog() {
         val help = """
-            🥖 Panduan Memesan di Erles Bakery:
+            Panduan Memesan di Erles Bakery:
             
             1. Pilih Produk: Telusuri roti di Tab Katalog, gunakan pencarian & filter kategori.
             2. Masukkan Keranjang: Atur jumlah roti dan masukkan ke keranjang.
             3. Lanjut ke Checkout: Isi nama, no WhatsApp, pilih ambil di toko atau diantar, lalu tentukan jam pengambilan.
             4. Dapatkan Kode Pesanan & QR Tiket: Buka Tab Lacak untuk melihat status pesanan dan scan tiket di kasir!
         """.trimIndent()
-
         AlertDialog.Builder(this)
             .setTitle("Panduan Pemesanan")
             .setMessage(help)

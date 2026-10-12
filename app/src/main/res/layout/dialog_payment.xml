@@ -105,7 +105,7 @@
                 android:button="@null"
                 android:checked="true"
                 android:gravity="center"
-                android:text="📱 QRIS"
+                android:text="QRIS"
                 android:textColor="@color/primary_dark"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -119,7 +119,7 @@
                 android:background="@drawable/bg_search_bar"
                 android:button="@null"
                 android:gravity="center"
-                android:text="💳 Bank BCA"
+                android:text="Bank BCA"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -133,7 +133,7 @@
                 android:background="@drawable/bg_search_bar"
                 android:button="@null"
                 android:gravity="center"
-                android:text="💵 Tunai"
+                android:text="Tunai"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -301,7 +301,7 @@
             android:drawablePadding="8dp"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
-            android:text="💬 Kirim Bukti Pembayaran ke WA Kasir"
+            android:text="Kirim Bukti Pembayaran ke WhatsApp Kasir"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="13sp"

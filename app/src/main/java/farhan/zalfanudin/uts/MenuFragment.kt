@@ -56,7 +56,7 @@ class MenuFragment : Fragment() {
         setupCategorySpinner()
         setupSortPopupMenu()
 
-        // Poin UTS #18 & #19: Mengambil data real-time dari Web Service Laravel via Volley
+        // #18 & #19: Mengambil data katalog real-time dari REST API Laravel via Volley
         loadCategoriesFromApi()
         loadProductsFromApi()
     }
@@ -103,7 +103,7 @@ class MenuFragment : Fragment() {
         loadProductsFromApi()
     }
 
-    // 1. Setup ListView Produk
+    // #9: Setup ListView Produk
     private fun setupListView() {
         displayedProducts = allProducts.toMutableList()
 
@@ -186,7 +186,7 @@ class MenuFragment : Fragment() {
         bottomSheet.show()
     }
 
-    // 2. Setup AutoCompleteTextView (Pencarian Otomatis)
+    // #5: Setup AutoCompleteTextView (Pencarian Otomatis)
     private fun setupAutoCompleteSearch() {
         val productNames = allProducts.map { it.name }
         val searchAdapter = ArrayAdapter(
@@ -211,7 +211,7 @@ class MenuFragment : Fragment() {
         })
     }
 
-    // 3. Setup Spinner (Filter Kategori Roti)
+    // #8: Setup Spinner (Filter Kategori Roti)
     private fun setupCategorySpinner() {
         val categoryNames = allCategories
         val spinnerAdapter = ArrayAdapter(
@@ -232,7 +232,7 @@ class MenuFragment : Fragment() {
         }
     }
 
-    // 4. Setup PopupMenu (Sortir Harga & Nama)
+    // #12: Setup PopupMenu (Sortir Harga & Nama)
     private fun setupSortPopupMenu() {
         binding.btnSort.setOnClickListener { v ->
             val popup = PopupMenu(requireContext(), v)

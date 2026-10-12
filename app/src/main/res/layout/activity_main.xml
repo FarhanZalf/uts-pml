@@ -8,7 +8,7 @@
     android:background="@color/background_soft"
     tools:context=".MainActivity">
 
-    <!-- 1. Toolbar Utama dengan OptionsMenu (Poin Penilaian Dosen: OptionsMenu & Toolbar) -->
+    <!-- #10: Toolbar Utama dengan OptionsMenu -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/topToolbar"
         android:layout_width="0dp"
@@ -25,7 +25,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 2. Container FrameLayout untuk menampilkan Fragment (Poin Penilaian Dosen: FrameLayout & Fragment) -->
+    <!-- Container FrameLayout untuk menampilkan Fragment -->
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="0dp"
@@ -35,7 +35,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 3. BottomNavigationView (Poin Penilaian Dosen: BottomNavigationView) -->
+    <!-- BottomNavigationView -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
         android:layout_width="0dp"

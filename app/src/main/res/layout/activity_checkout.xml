@@ -52,7 +52,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- KARTU 1: DATA PEMESAN (Poin Dosen: EditText & SharedPreferences) -->
+            <!-- #1: Data Pemesan (EditText & SharedPreferences) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -125,7 +125,7 @@
                     android:textSize="14sp" />
             </LinearLayout>
 
-            <!-- KARTU 2: METODE PENGAMBILAN (Poin Dosen: RadioButton) -->
+            <!-- #3: Metode Pengambilan (RadioButton) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -196,7 +196,7 @@
                     android:textColorHint="@color/text_muted"
                     android:textSize="13sp" />
 
-                <!-- Tombol Aksi GPS & Peta OSM (Poin Penilaian Dosen #21 GPS & #22 Maps/OSM) -->
+                <!-- #21 & #22: Tombol Aksi GPS & Peta OSM -->
                 <LinearLayout
                     android:id="@+id/layoutGpsMapButtons"
                     android:layout_width="match_parent"
@@ -241,7 +241,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- KARTU 3: JADWAL PENGAMBILAN (Poin Dosen: DatePickerDialog & TimePickerDialog) -->
+            <!-- #6 & #7: Jadwal Pengambilan (DatePickerDialog & TimePickerDialog) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -339,7 +339,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- KARTU 4: OPSI TAMBAHAN (Poin Dosen: CheckBox) -->
+            <!-- #2: Opsi Tambahan (CheckBox) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -447,7 +447,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:checked="true"
-                        android:text="📱 QRIS Instan (BCA, GoPay, OVO, Dana, ShopeePay)"
+                        android:text="QRIS Instan (BCA, GoPay, OVO, Dana, ShopeePay)"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp" />
 
@@ -456,7 +456,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="💳 Transfer Bank BCA (No. Rek 8120938471)"
+                        android:text="Transfer Bank BCA (No. Rek 8120938471)"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp" />
 
@@ -465,7 +465,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="💵 Tunai di Kasir / Bayar saat Ambil"
+                        android:text="Tunai di Kasir / Bayar saat Ambil"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp" />
                 </RadioGroup>

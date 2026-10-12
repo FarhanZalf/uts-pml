@@ -65,7 +65,7 @@ class CheckoutActivity : AppCompatActivity() {
         const val BAKERY_LNG = 112.0069
     }
 
-    // Launcher izin lokasi untuk fitur GPS (Poin Penilaian Dosen #21: GPS 2%)
+    // #21: Launcher izin lokasi untuk fitur GPS
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -115,7 +115,7 @@ class CheckoutActivity : AppCompatActivity() {
         }
     }
 
-    // 1. SharedPreferences & Firebase Auth: Mengisi nama & nomor HP otomatis
+    // #23 & #29: SharedPreferences & Firebase Auth mengisi nama & nomor HP otomatis
     private fun loadCustomerFromPreferences() {
         val savedName = sharedPreferences.getString(KEY_NAME, "")
         val savedPhone = sharedPreferences.getString(KEY_PHONE, "")
@@ -153,7 +153,7 @@ class CheckoutActivity : AppCompatActivity() {
         }
     }
 
-    // 2. RadioButton: Logika Ambil di Toko vs Diantar ke Rumah
+    // #1: RadioButton metode Ambil di Toko vs Diantar ke Rumah
     private fun setupDeliveryRadioGroup() {
         binding.rgDeliveryMethod.setOnCheckedChangeListener { _, checkedId ->
             if (checkedId == R.id.rbPickup) {
@@ -171,7 +171,7 @@ class CheckoutActivity : AppCompatActivity() {
         }
     }
 
-    // 3. Integrasi GPS & OpenStreetMap (Poin Penilaian Dosen #21: GPS 2% & #22: Maps/OSM 2%)
+    // #21 & #22: Integrasi GPS & OpenStreetMap
     private fun setupGpsAndMapButtons() {
         // Tombol 1: Deteksi Lokasi GPS
         binding.btnDetectGps.setOnClickListener {
@@ -217,7 +217,7 @@ class CheckoutActivity : AppCompatActivity() {
 
         val addressText = reverseGeocodeCoords(lat, lng)
         binding.etCustomerAddress.setText(addressText)
-        Toast.makeText(this, "📍 GPS Berhasil Terdeteksi (%.4f, %.4f)".format(lat, lng), Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "GPS Berhasil Terdeteksi (%.4f, %.4f)".format(lat, lng), Toast.LENGTH_SHORT).show()
     }
 
     private fun reverseGeocodeCoords(lat: Double, lng: Double): String {
@@ -383,7 +383,7 @@ class CheckoutActivity : AppCompatActivity() {
         binding.tvCheckoutGrandTotal.text = formatRupiah(grandTotal)
     }
 
-    // 6. Validasi & Submit Pemesanan (Poin UTS #18: API & #19: Volley)
+    // #18 & #19: Validasi & Submit Pemesanan via REST API Volley
     private fun setupSubmitButton() {
         binding.btnSubmitOrder.setOnClickListener {
             val name = binding.etCustomerName.text.toString().trim()
@@ -547,9 +547,9 @@ class CheckoutActivity : AppCompatActivity() {
         paymentLabel: String = "QRIS"
     ) {
         val syncBadge = if (isServerSynced) {
-            "✓ Tersinkronisasi ke Web Admin ERP"
+            "Tersinkronisasi ke Web Admin ERP"
         } else {
-            "⚠ Tersimpan Offline di Perangkat (${offlineNote})"
+            "Tersimpan Offline di Perangkat (${offlineNote})"
         }
 
         val message = """

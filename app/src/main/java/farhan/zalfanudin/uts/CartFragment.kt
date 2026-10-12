@@ -45,7 +45,7 @@ class CartFragment : Fragment() {
         setupListView()
         setupListeners()
 
-        // Daftarkan ListView untuk ContextMenu (Poin Penilaian Dosen: ContextMenu)
+        // #11: Daftarkan ListView untuk ContextMenu
         registerForContextMenu(binding.lvCart)
 
         loadCartData()
@@ -158,7 +158,7 @@ class CartFragment : Fragment() {
             .show()
     }
 
-    // --- IMPLEMENTASI CONTEXT MENU (Poin Penilaian Dosen: ContextMenu) ---
+    // #11: Context menu untuk interaksi item keranjang belanja
     override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenu.ContextMenuInfo?) {
         super.onCreateContextMenu(menu, v, menuInfo)
         val info = menuInfo as? AdapterView.AdapterContextMenuInfo ?: return

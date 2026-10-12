@@ -15,10 +15,7 @@ import org.json.JSONObject
 import java.util.Locale
 
 /**
- * Service untuk menangani komunikasi jaringan REST API Erles Bakery ERP menggunakan Android Volley.
- * Implementasi Poin Penilaian Dosen UTS:
- * - Poin #18: Database MySQL & Web Service/API (Bobot 2%)
- * - Poin #19: Pustaka Volley (Bobot 1%)
+ * #18 & #19: Komunikasi jaringan REST API Erles Bakery ERP menggunakan Android Volley.
  */
 object ApiService {
 

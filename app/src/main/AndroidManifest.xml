@@ -2,18 +2,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Izin Akses Internet & Peta OSM (Poin Dosen #22: Maps/OSM) -->
+    <!-- #22: Izin Akses Internet & Peta OSM -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Izin Akses GPS & Lokasi Pelanggan (Poin Dosen #21: GPS) -->
+    <!-- #21: Izin Akses GPS & Lokasi Pelanggan -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <!-- Izin Notifikasi FCM (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Izin Kamera untuk Foto Bukti Pembayaran (Poin Dosen #20: Kamera) -->
+    <!-- #20: Izin Kamera untuk Foto Bukti Pembayaran -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 

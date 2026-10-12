@@ -6,8 +6,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 
 /**
- * Singleton untuk mengelola antrean request Volley di seluruh siklus hidup aplikasi.
- * Sesuai kriteria penilaian UTS PML: Poin #19 (Pustaka Volley) & #18 (MySQL & Web Service/API).
+ * #19 & #18: Singleton untuk mengelola antrean request Volley di seluruh siklus hidup aplikasi.
  */
 class VolleySingleton private constructor(context: Context) {
 
