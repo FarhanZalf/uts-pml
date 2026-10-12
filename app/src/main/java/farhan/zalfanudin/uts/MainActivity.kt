@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var cartDbHelper: CartDatabaseHelper
+    private var firebaseInstallationId: String? = null
 
     private val requestNotificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -44,6 +45,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         cartDbHelper = CartDatabaseHelper(this)
+
+        // Ambil Firebase Installation ID (FID) untuk pengujian instan In-App Messaging
+        com.google.firebase.installations.FirebaseInstallations.getInstance().id.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                firebaseInstallationId = task.result
+                android.util.Log.e("TEST_FID", "==================================================")
+                android.util.Log.e("TEST_FID", "KODE INSTALLATION ID (FID) ANDA: ${task.result}")
+                android.util.Log.e("TEST_FID", "==================================================")
+            }
+        }
 
         // Setup notification channel (LANGKAH 5)
         ErlesFirebaseMessagingService.createNotificationChannel(this)
@@ -220,6 +231,29 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 0, 0, (10 * resources.displayMetrics.density).toInt())
             })
             addView(input)
+
+            // Info Firebase Installation ID (FID) untuk kemudahan pengujian In-App Messaging
+            val fidDisplay = firebaseInstallationId ?: "Memuat..."
+            addView(android.widget.TextView(this@MainActivity).apply {
+                text = "\nID Perangkat (Firebase Installation ID / FID):\n$fidDisplay"
+                textSize = 11f
+                setTextColor(androidx.core.content.ContextCompat.getColor(this@MainActivity, R.color.primary_dark))
+                setPadding(0, (6 * resources.displayMetrics.density).toInt(), 0, (4 * resources.displayMetrics.density).toInt())
+                setTextIsSelectable(true)
+            })
+
+            if (!firebaseInstallationId.isNullOrEmpty()) {
+                addView(com.google.android.material.button.MaterialButton(this@MainActivity).apply {
+                    text = "Salin ID FID (Test Device)"
+                    textSize = 11f
+                    setOnClickListener {
+                        val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        val clip = android.content.ClipData.newPlainText("Firebase Installation ID", firebaseInstallationId)
+                        clipboard.setPrimaryClip(clip)
+                        Toast.makeText(this@MainActivity, "FID berhasil disalin!", Toast.LENGTH_SHORT).show()
+                    }
+                })
+            }
         }
 
         AlertDialog.Builder(this)
