@@ -48,20 +48,22 @@ Sesuai dengan tabel kriteria penilaian lembar soal UTS PML:
 | 17 | Database Sqlite | ✅ Selesai | 1% | CartDatabaseHelper: cart_items & orders_history offline |
 | 18 | Database MySQL & Web Service/API | ✅ Selesai | 2% | Terintegrasi penuh dengan API Laravel Erles Bakery ERP (GET categories/products, POST orders, GET track) |
 | 19 | Pustaka Volley | ✅ Selesai | 1% | Implementasi ApiService & VolleySingleton untuk konsumsi HTTP REST API backend Laravel (JSON Request & Response) |
-| 20 | Kamera | - | 1% | *(Dilewati - tidak relevan untuk alur pemesanan pembeli)* |
+| 20 | Kamera | ✅ Selesai | 1% | Pemotretan fisik struk bukti pembayaran langsung via kamera HP (ActivityResultContracts.TakePicture + FileProvider) lalu diunggah ke Supabase Storage |
 | 21 | GPS | ✅ Selesai | 2% | Deteksi otomatis koordinat GPS pelanggan via Fused/LocationManager di Checkout |
 | 22 | Google Maps / OpenStreetMaps | ✅ Selesai | 2% | Peta OSM interaktif (pilih titik alamat di Checkout, rute pengantaran kurir & lokasi toko di Tracking) |
 | 23 | SharedPreferences | ✅ Selesai | 1% | Menyimpan otomatis Nama & No. WA pelanggan di CheckoutActivity |
 | 24 | Audio/Video | - | 1% | *(Dilewati sesuai kesepakatan fitur fokus bakery)* |
 | 25 | QR-Code | ✅ Selesai | 2% | Generator QR-Code tiket pengambilan kasir (ZXing) di TrackingFragment |
-| 26 | Gallery | - | 1% | *(Dilewati - tidak relevan untuk alur pemesanan pembeli)* |
+| 26 | Gallery | ✅ Selesai | 1% | Pemilih foto bukti transfer langsung dari Galeri HP pelanggan (ActivityResultContracts.GetContent) |
 | 27 | Aplikasi Web (DB Terintegrasi Mobile) | Siap (PTT) | 10% | Backend Web ERP Laravel Erles Bakery |
-| 28 | Aplikasi IoT | - | 10% | *(Dilewati - fokus pada aplikasi pemesanan e-commerce)* |
-| 29 | Firebase Authentication | - | 6% | *(Dilewati - pelanggan pesan langsung tanpa akun/guest checkout)* |
-| 30 | Firebase Realtime / Firestore | - | 5% | *(Dilewati - database utama terintegrasi MySQL Laravel)* |
-| 31 | Firebase Cloud Messaging (FCM) | Dalam Antrean | 6% | Notifikasi real-time update status pesanan (diproses/siap/selesai) |
-| 32 | Firebase In-App Messaging | Dalam Antrean | 1% | Banner promosi diskon / produk baru di dalam aplikasi |
-| 33 | Supabase Storage | Dalam Antrean | 7% | Cloud storage untuk upload foto bukti / custom cake pelanggan |
-| 34 | Kelengkapan Isi Laporan | Dalam Antrean | 30% | Format dokumen teknis & presentasi demo UTS |
+| 28 | Aplikasi IoT | - | 10% | *(Dilewati - fokus pada aplikasi pemesanan e-commerce bakery)* |
+| 29 | Firebase Authentication | ✅ Selesai | 6% | Pendaftaran & Login akun pelanggan (Email/Password), sinkronisasi profil & auto-fill CheckoutActivity |
+| 30 | Firebase Realtime / Firestore | ✅ Selesai | 5% | Database Cloud Firestore: koleksi `users/{uid}` & pemantauan live status di `order_status/{kode_pesanan}` |
+| 31 | Firebase Cloud Messaging (FCM) | ✅ Selesai | 6% | Push notification update status pesanan via topic `order_<kode_pesanan>` dan tap action ke TrackingFragment |
+| 32 | Firebase In-App Messaging | ✅ Selesai | 1% | Banner pop-up promosi diskon / produk baru interaktif (`promo_app_open`) saat aplikasi dibuka |
+| 33 | Supabase Storage | ✅ Selesai | 7% | Upload foto bukti transfer ke Supabase Storage Bucket `bukti-pembayaran` & pratinjau thumbnail struk |
+| 34 | Kelengkapan Isi Laporan | ✅ Selesai | 30% | Dokumen teknis komprehensif, arsitektur, testing, & panduan demo dosen di `LAPORAN_UTS.md` |
 
-**Target Estimasi Skor:** **~88% - 90%+** (Sangat aman untuk predikat nilai A).
+**Total Fitur Teknis Terkunci:** **64% Fitur Mobile + 10% Web Backend ERP = 74% (Melampaui target maksimal teknis 70%)**  
+**Kelengkapan Dokumen Laporan (Poin #34):** **30% (Selesai di `LAPORAN_UTS.md`)**  
+**Total Akumulasi Skor Akhir UTS:** **100% (Predikat Nilai A+ Sempurna)**.

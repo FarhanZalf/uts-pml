@@ -1,6 +1,8 @@
 package farhan.zalfanudin.uts
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.net.Uri
 import android.os.Bundle
@@ -11,8 +13,10 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import farhan.zalfanudin.uts.data.CartDatabaseHelper
 import farhan.zalfanudin.uts.databinding.FragmentTrackBinding
@@ -25,6 +29,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
+import java.io.File
 import java.net.URLEncoder
 import java.text.NumberFormat
 import java.util.Locale
@@ -37,6 +42,45 @@ class TrackingFragment : Fragment() {
     private lateinit var cartDbHelper: CartDatabaseHelper
     private var currentDisplayedOrder: Order? = null
     private var firestoreListener: com.google.firebase.firestore.ListenerRegistration? = null
+
+    // Poin UTS #20: Kamera, #26: Gallery & #33: Supabase Storage
+    private var cameraPhotoUri: Uri? = null
+
+    private val pickPaymentProofLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val order = currentDisplayedOrder
+            if (order != null) {
+                uploadProofToSupabase(uri, order)
+            }
+        }
+    }
+
+    private val takeCameraProofLauncher = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success && cameraPhotoUri != null) {
+            val order = currentDisplayedOrder
+            if (order != null) {
+                uploadProofToSupabase(cameraPhotoUri!!, order)
+            }
+        }
+    }
+
+    private val requestCameraPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            launchCamera()
+        } else {
+            Toast.makeText(
+                requireContext(),
+                "Izin kamera diperlukan untuk memotret bukti pembayaran.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -178,6 +222,11 @@ class TrackingFragment : Fragment() {
             showPaymentDialog(order)
         }
 
+        // Poin UTS #20: Kamera, #26: Gallery & #33: Supabase Storage
+        binding.btnUploadPaymentProof.setOnClickListener {
+            showUploadProofSourceDialog(order)
+        }
+
         // Tombol Batalkan Pesanan: HANYA muncul jika status masih 'pending' (menunggu konfirmasi toko)
         if (statusClean == "pending") {
             binding.btnCancelOrder.visibility = View.VISIBLE
@@ -217,6 +266,7 @@ class TrackingFragment : Fragment() {
 
             binding.btnPayOrder.visibility = View.GONE
             binding.layoutPaymentPaidNotice.visibility = View.VISIBLE
+            binding.btnUploadPaymentProof.text = "📤 Ganti Bukti Transfer (Kamera / Galeri)"
         } else {
             val statusClean = order.paymentStatus.lowercase(Locale.getDefault())
             if (statusClean == "partial" || statusClean == "sebagian") {
@@ -232,7 +282,116 @@ class TrackingFragment : Fragment() {
             binding.btnPayOrder.visibility = View.VISIBLE
             binding.btnPayOrder.text = "💳 Bayar Sekarang (QRIS / Transfer BCA)"
             binding.layoutPaymentPaidNotice.visibility = View.GONE
+            binding.btnUploadPaymentProof.text = "📤 Unggah Bukti Transfer (Kamera / Galeri)"
         }
+    }
+
+    // Dialog Pemilihan Sumber: Kamera HP (Poin #20) atau Galeri (Poin #26)
+    private fun showUploadProofSourceDialog(order: Order) {
+        val options = arrayOf(
+            "📸 Ambil Foto Struk (Kamera HP)",
+            "🖼️ Pilih dari Galeri HP (Screenshot / File)"
+        )
+        AlertDialog.Builder(requireContext())
+            .setTitle("Pilih Sumber Bukti Pembayaran")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> {
+                        // Kamera Langsung (Poin UTS #20)
+                        if (ContextCompat.checkSelfPermission(
+                                requireContext(),
+                                Manifest.permission.CAMERA
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            launchCamera()
+                        } else {
+                            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
+                    1 -> {
+                        // Galeri HP (Poin UTS #26)
+                        pickPaymentProofLauncher.launch("image/*")
+                    }
+                }
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    // Meluncurkan Kamera HP dengan FileProvider (Poin UTS #20)
+    private fun launchCamera() {
+        try {
+            val context = requireContext()
+            val photoFile = File(context.cacheDir, "bukti_transfer_camera_${System.currentTimeMillis()}.jpg")
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                photoFile
+            )
+            cameraPhotoUri = uri
+            takeCameraProofLauncher.launch(uri)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Gagal membuka kamera: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Mengunggah file struk/bukti bayar dari Kamera / Galeri ke Supabase Storage (Poin #33, #20, #26)
+    private fun uploadProofToSupabase(uri: Uri, order: Order) {
+        farhan.zalfanudin.uts.util.SupabaseStorageUtil.uploadPaymentProof(
+            context = requireContext(),
+            imageUri = uri,
+            orderCode = order.orderCode,
+            onStart = {
+                binding.pbUploadProof.visibility = View.VISIBLE
+                binding.btnUploadPaymentProof.isEnabled = false
+                binding.btnUploadPaymentProof.text = "Mengunggah ke Supabase..."
+            },
+            onSuccess = { publicUrl, bitmap ->
+                if (_binding == null || !isAdded) return@uploadPaymentProof
+                binding.pbUploadProof.visibility = View.GONE
+                binding.btnUploadPaymentProof.isEnabled = true
+                binding.btnUploadPaymentProof.text = "📤 Ganti Bukti Transfer (Kamera / Galeri)"
+
+                // Tampilkan foto pratinjau struk transfer
+                binding.layoutProofPreview.visibility = View.VISIBLE
+                binding.ivProofThumbnail.setImageBitmap(bitmap)
+                binding.tvProofStatus.text = "✅ Bukti Tersimpan di Supabase:\n$publicUrl"
+
+                // Update status pembayaran lokal di SQLite
+                cartDbHelper.updateOrderPaymentStatus(order.orderCode, "paid")
+
+                // Sinkronkan URL bukti pembayaran & status ke Cloud Firestore
+                try {
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        .collection("order_status").document(order.orderCode)
+                        .update(
+                            mapOf(
+                                "payment_status" to "paid",
+                                "payment_proof_url" to publicUrl,
+                                "updated_at" to java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply {
+                                    timeZone = java.util.TimeZone.getTimeZone("UTC")
+                                }.format(java.util.Date())
+                            )
+                        )
+                } catch (_: Exception) {}
+
+                Toast.makeText(requireContext(), "Bukti transfer berhasil diunggah ke Supabase Storage!", Toast.LENGTH_LONG).show()
+
+                val refreshed = cartDbHelper.getOrderByCode(order.orderCode)
+                if (refreshed != null) {
+                    currentDisplayedOrder = refreshed
+                    updatePaymentViews(refreshed)
+                    populateOrderHistoryList(cartDbHelper.getAllOrders())
+                }
+            },
+            onError = { errorMsg ->
+                if (_binding == null || !isAdded) return@uploadPaymentProof
+                binding.pbUploadProof.visibility = View.GONE
+                binding.btnUploadPaymentProof.isEnabled = true
+                binding.btnUploadPaymentProof.text = "📤 Unggah Bukti Transfer (Kamera / Galeri)"
+                Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_LONG).show()
+            }
+        )
     }
 
     private fun listenToOrderStatusRealtime(orderCode: String) {
@@ -274,8 +433,26 @@ class TrackingFragment : Fragment() {
                         }
                     }
                 } else {
-                    // Dokumen belum ada di Firestore -> Sembunyikan indikator realtime, tetap tampilkan data API
-                    binding.tvRealtimeIndicator.visibility = View.GONE
+                    // Dokumen belum ada di Firestore -> Sinkronkan otomatis ke Firestore order_status
+                    val cur = currentDisplayedOrder
+                    if (cur != null && cur.orderCode == orderCode) {
+                        try {
+                            val initialData = hashMapOf(
+                                "kode_pesanan" to cur.orderCode,
+                                "customer_name" to cur.customerName,
+                                "customer_phone" to cur.customerPhone,
+                                "status" to cur.status,
+                                "payment_status" to cur.paymentStatus,
+                                "payment_method" to cur.paymentMethod,
+                                "total_price" to cur.totalPrice.toLong(),
+                                "updated_at" to java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).apply { 
+                                    timeZone = java.util.TimeZone.getTimeZone("UTC") 
+                                }.format(java.util.Date())
+                            )
+                            db.collection("order_status").document(orderCode).set(initialData)
+                        } catch (_: Exception) {}
+                    }
+                    binding.tvRealtimeIndicator.visibility = View.VISIBLE
                 }
             }
     }
@@ -437,6 +614,11 @@ class TrackingFragment : Fragment() {
         }
 
         cartDbHelper.updateOrderStatus(order.orderCode, nextStatus)
+        try {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("order_status").document(order.orderCode)
+                .update("status", nextStatus)
+        } catch (_: Exception) {}
         Toast.makeText(requireContext(), "Status diubah ke: $nextStatus (Simulasi Dosen)", Toast.LENGTH_SHORT).show()
 
         val updatedOrder = cartDbHelper.getOrderByCode(order.orderCode)
@@ -471,6 +653,11 @@ class TrackingFragment : Fragment() {
             .setIcon(R.drawable.ic_delete)
             .setPositiveButton("Ya, Batalkan Pesanan") { _, _ ->
                 cartDbHelper.updateOrderStatus(order.orderCode, "dibatalkan")
+                try {
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        .collection("order_status").document(order.orderCode)
+                        .update("status", "dibatalkan")
+                } catch (_: Exception) {}
                 Toast.makeText(requireContext(), "Pesanan ${order.orderCode} berhasil dibatalkan", Toast.LENGTH_SHORT).show()
 
                 val refreshed = cartDbHelper.getOrderByCode(order.orderCode)

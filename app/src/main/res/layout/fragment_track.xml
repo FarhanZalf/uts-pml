@@ -373,6 +373,64 @@
                             android:textSize="11sp"
                             android:textStyle="bold" />
                     </LinearLayout>
+
+                    <!-- FITUR SUPABASE STORAGE & GALLERY (POIN UTS #33 & #26) -->
+                    <LinearLayout
+                        android:id="@+id/layoutUploadProofSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="vertical">
+
+                        <Button
+                            android:id="@+id/btnUploadPaymentProof"
+                            android:layout_width="match_parent"
+                            android:layout_height="42dp"
+                            android:background="@drawable/bg_button_secondary"
+                            android:text="📤 Unggah Bukti Transfer (Kamera / Galeri)"
+                            android:textAllCaps="false"
+                            android:textColor="@color/primary_dark"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <ProgressBar
+                            android:id="@+id/pbUploadProof"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:layout_marginTop="6dp"
+                            android:visibility="gone" />
+
+                        <!-- Container Pratinjau Foto Bukti Pembayaran dari Supabase -->
+                        <LinearLayout
+                            android:id="@+id/layoutProofPreview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/bg_product_card"
+                            android:orientation="vertical"
+                            android:padding="8dp"
+                            android:visibility="gone">
+
+                            <TextView
+                                android:id="@+id/tvProofStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="✅ Bukti Transfer Tersimpan di Supabase Storage:"
+                                android:textColor="@color/status_green"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <ImageView
+                                android:id="@+id/ivProofThumbnail"
+                                android:layout_width="match_parent"
+                                android:layout_height="170dp"
+                                android:layout_marginTop="6dp"
+                                android:background="#F5F5F5"
+                                android:contentDescription="Bukti Transfer Supabase"
+                                android:scaleType="centerCrop" />
+                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
 

@@ -474,6 +474,7 @@ class CheckoutActivity : AppCompatActivity() {
                     )
                     cartDbHelper.saveOrder(orderToSave)
                     cartDbHelper.clearCart()
+                    syncOrderToFirestore(orderToSave)
 
                     // Subscribe ke topic FCM untuk menerima pembaruan status pesanan realtime
                     com.google.firebase.messaging.FirebaseMessaging.getInstance()
@@ -505,11 +506,36 @@ class CheckoutActivity : AppCompatActivity() {
                     )
                     cartDbHelper.saveOrder(fallbackOrder)
                     cartDbHelper.clearCart()
+                    syncOrderToFirestore(fallbackOrder)
+
                     com.google.firebase.messaging.FirebaseMessaging.getInstance()
                         .subscribeToTopic("order_$fallbackCode")
                     showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg, paymentLabel = paymentLabel)
                 }
             )
+        }
+    }
+
+    private fun syncOrderToFirestore(order: farhan.zalfanudin.uts.model.Order) {
+        try {
+            val firestoreData = hashMapOf(
+                "kode_pesanan" to order.orderCode,
+                "customer_name" to order.customerName,
+                "customer_phone" to order.customerPhone,
+                "status" to order.status,
+                "payment_status" to order.paymentStatus,
+                "payment_method" to order.paymentMethod,
+                "total_price" to order.totalPrice.toLong(),
+                "updated_at" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { 
+                    timeZone = java.util.TimeZone.getTimeZone("UTC") 
+                }.format(java.util.Date())
+            )
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                .collection("order_status")
+                .document(order.orderCode)
+                .set(firestoreData)
+        } catch (_: Exception) {
+            // Abaikan jika offline
         }
     }
 
