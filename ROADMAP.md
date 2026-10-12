@@ -102,7 +102,7 @@ Dokumen ini adalah panduan alur kerja pengembangan dan pelacak progres (*progres
   - Dialog pemilih sumber foto bukti bayar: Kamera langsung (Poin #20) atau Galeri HP (Poin #26) di `TrackingFragment`.
   - Menampilkan pratinjau thumbnail struk transfer dan sinkronisasi URL publik ke Cloud Firestore & SQLite.
 - [x] **Penyusunan Laporan UTS Lengkap (SELESAI - Poin #34 - 30%)**:
-  - Dokumen resmi lengkap tersimpan di `LAPORAN_UTS.md` mencakup: Ringkasan Eksekutif, Pendahuluan, Arsitektur Sistem, Matriks Pemetaan 34 Fitur UTS, Implementasi Teknis Mendalam, Pengujian Black Box Testing (TC-01 s/d TC-08), Panduan Praktikum Demonstrasi Dosen 5 Menit, dan Lampiran Struktur Kode.
+  - Dokumen resmi laporan teknis disusun secara terpisah oleh anggota tim kelompok untuk kebutuhan pengumpulan tugas besar UTS.
 
 ---
 
