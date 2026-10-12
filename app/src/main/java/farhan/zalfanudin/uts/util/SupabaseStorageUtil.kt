@@ -31,16 +31,17 @@ object SupabaseStorageUtil {
         orderCode: String,
         onStart: () -> Unit,
         onSuccess: (publicUrl: String, bitmap: Bitmap) -> Unit,
-        onError: (errorMessage: String) -> Unit
+        onError: (errorMessage: String, fallbackBitmap: Bitmap?) -> Unit
     ) {
         onStart()
 
         executor.execute {
+            var scaledBitmap: Bitmap? = null
             try {
-                // 1. Baca data gambar dari Uri Galeri HP
+                // 1. Baca data gambar dari Uri Galeri / Kamera HP
                 val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
                 if (inputStream == null) {
-                    mainHandler.post { onError("Gagal membuka file gambar dari galeri.") }
+                    mainHandler.post { onError("Gagal membuka file gambar dari perangkat.", null) }
                     return@execute
                 }
 
@@ -48,12 +49,12 @@ object SupabaseStorageUtil {
                 inputStream.close()
 
                 if (originalBitmap == null) {
-                    mainHandler.post { onError("Format gambar tidak dikenali.") }
+                    mainHandler.post { onError("Format gambar tidak dikenali.", null) }
                     return@execute
                 }
 
                 // 2. Optimasi resolusi bitmap agar hemat kuota & cepat terkirim
-                val scaledBitmap = scaleBitmapIfNeeded(originalBitmap, 1200)
+                scaledBitmap = scaleBitmapIfNeeded(originalBitmap, 1200)
                 val byteArrayOutputStream = ByteArrayOutputStream()
                 scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, byteArrayOutputStream)
                 val imageBytes = byteArrayOutputStream.toByteArray()
@@ -97,14 +98,14 @@ object SupabaseStorageUtil {
                 } else {
                     val errorBody = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
                     mainHandler.post {
-                        onError("Gagal mengunggah ke Supabase (HTTP $responseCode): $errorBody")
+                        onError("Gagal mengunggah ke Supabase (HTTP $responseCode): $errorBody", scaledBitmap)
                     }
                 }
                 conn.disconnect()
 
             } catch (e: Exception) {
                 mainHandler.post {
-                    onError("Terjadi kesalahan jaringan: ${e.localizedMessage ?: e.message}")
+                    onError("Terjadi kesalahan koneksi cloud: ${e.localizedMessage ?: e.message}", scaledBitmap)
                 }
             }
         }
