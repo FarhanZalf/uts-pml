@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -36,6 +37,8 @@ class Order extends Model
             'total_price' => 'decimal:2',
             'paid_amount' => 'decimal:2',
             'tanggal_ambil' => 'date',
+            'alamat' => SafeEncrypted::class,
+            'catatan' => SafeEncrypted::class,
         ];
     }
 
