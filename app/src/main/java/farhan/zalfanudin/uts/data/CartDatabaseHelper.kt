@@ -12,7 +12,7 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
 
     companion object {
         private const val DATABASE_NAME = "erles_bakery.db"
-        private const val DATABASE_VERSION = 4
+        private const val DATABASE_VERSION = 5
 
         // Tabel Keranjang
         const val TABLE_CART = "cart_items"
@@ -29,6 +29,7 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         const val TABLE_ORDERS = "orders_history"
         const val COLUMN_ORDER_ID = "id"
         const val COLUMN_KODE_PESANAN = "kode_pesanan"
+        const val COLUMN_AES_KEY = "aes_key"
         const val COLUMN_CUSTOMER_NAME = "customer_name"
         const val COLUMN_CUSTOMER_PHONE = "customer_phone"
         const val COLUMN_ALAMAT = "alamat"
@@ -59,6 +60,7 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
             CREATE TABLE $TABLE_ORDERS (
                 $COLUMN_ORDER_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_KODE_PESANAN TEXT UNIQUE NOT NULL,
+                $COLUMN_AES_KEY TEXT DEFAULT 'Qwertyui87651234',
                 $COLUMN_CUSTOMER_NAME TEXT NOT NULL,
                 $COLUMN_CUSTOMER_PHONE TEXT NOT NULL,
                 $COLUMN_ALAMAT TEXT NOT NULL,
@@ -82,6 +84,7 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 CREATE TABLE IF NOT EXISTS $TABLE_ORDERS (
                     $COLUMN_ORDER_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                     $COLUMN_KODE_PESANAN TEXT UNIQUE NOT NULL,
+                    $COLUMN_AES_KEY TEXT DEFAULT 'Qwertyui87651234',
                     $COLUMN_CUSTOMER_NAME TEXT NOT NULL,
                     $COLUMN_CUSTOMER_PHONE TEXT NOT NULL,
                     $COLUMN_ALAMAT TEXT NOT NULL,
@@ -108,6 +111,11 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
             } catch (_: Exception) {}
             try {
                 db.execSQL("ALTER TABLE $TABLE_ORDERS ADD COLUMN $COLUMN_PAYMENT_METHOD TEXT DEFAULT 'qris'")
+            } catch (_: Exception) {}
+        }
+        if (oldVersion < 5) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_ORDERS ADD COLUMN $COLUMN_AES_KEY TEXT DEFAULT 'Qwertyui87651234'")
             } catch (_: Exception) {}
         }
     }
@@ -242,6 +250,9 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         val payMethodIdx = cursor.getColumnIndex(COLUMN_PAYMENT_METHOD)
         val payMethod = if (payMethodIdx >= 0 && !cursor.isNull(payMethodIdx)) cursor.getString(payMethodIdx) else "qris"
 
+        val aesKeyIdx = cursor.getColumnIndex(COLUMN_AES_KEY)
+        val aesKey = if (aesKeyIdx >= 0 && !cursor.isNull(aesKeyIdx)) cursor.getString(aesKeyIdx) else "Qwertyui87651234"
+
         return Order(
             id = id,
             orderCode = orderCode,
@@ -254,7 +265,8 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
             status = status,
             paymentStatus = payStatus,
             paymentMethod = payMethod,
-            createdAt = createdAt
+            createdAt = createdAt,
+            aesKey = if (aesKey.isNullOrEmpty()) "Qwertyui87651234" else aesKey
         )
     }
 
@@ -262,6 +274,7 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         val db = writableDatabase
         val values = ContentValues().apply {
             put(COLUMN_KODE_PESANAN, order.orderCode)
+            put(COLUMN_AES_KEY, order.aesKey.ifEmpty { "Qwertyui87651234" })
             put(COLUMN_CUSTOMER_NAME, order.customerName)
             put(COLUMN_CUSTOMER_PHONE, order.customerPhone)
             put(COLUMN_ALAMAT, order.address)

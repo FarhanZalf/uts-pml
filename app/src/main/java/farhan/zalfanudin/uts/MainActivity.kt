@@ -184,6 +184,11 @@ class MainActivity : AppCompatActivity() {
                 showHelpDialog()
                 return true
             }
+            R.id.action_aes_pertemuan11 -> {
+                val intent = Intent(this, farhan.zalfanudin.uts.crypto.AesPertemuan11Activity::class.java)
+                startActivity(intent)
+                return true
+            }
             R.id.action_server_settings -> {
                 showServerSettingsDialog()
                 return true

@@ -41,6 +41,24 @@ Route::post('/orders/pay', [PaymentController::class, 'publicPay'])->middleware(
 Route::post('/orders/{idOrCode}/pay', [PaymentController::class, 'publicPay'])->middleware('throttle:public-order');
 
 // Kriptografi Audit & Live Decrypt Test (Read-Only)
+Route::post('/crypto/encrypt', function (\Illuminate\Http\Request $request) {
+    $plaintext = $request->input('plaintext');
+    if (empty($plaintext)) {
+        return response()->json(['success' => false, 'message' => 'Plaintext wajib diisi'], 422);
+    }
+    try {
+        $ciphertext = \Illuminate\Support\Facades\Crypt::encryptString($plaintext);
+        return response()->json([
+            'success' => true,
+            'cipher' => 'AES-256-CBC',
+            'ciphertext' => $ciphertext,
+            'message' => 'Teks berhasil dienkripsi menggunakan AES-256.',
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json(['success' => false, 'message' => 'Gagal mengenkripsi.'], 400);
+    }
+});
+
 Route::post('/crypto/decrypt', function (\Illuminate\Http\Request $request) {
     $ciphertext = $request->input('ciphertext');
     if (empty($ciphertext)) {

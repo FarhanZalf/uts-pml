@@ -13,6 +13,9 @@ data class Order(
     val paymentStatus: String = "unpaid",
     val paymentMethod: String = "qris",
     val createdAt: String,
+    val aesKey: String = "Qwertyui87651234",
+    val rawNameCipher: String = "",
+    val rawPhoneCipher: String = "",
     val rawAlamatCipher: String = "",
     val rawCatatanCipher: String = ""
 ) {

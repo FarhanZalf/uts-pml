@@ -45,6 +45,10 @@
         <activity
             android:name=".AuthActivity"
             android:exported="false" />
+        <activity
+            android:name=".crypto.AesPertemuan11Activity"
+            android:exported="true"
+            android:label="PML 14 - Kriptografi AES" />
 
         <!-- Firebase Cloud Messaging Service -->
         <service

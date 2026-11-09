@@ -35,6 +35,67 @@
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
+        <!-- PENCARIAN / CEK PESANAN DENGAN KODE & KUNCI AES 16-CHAR -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_product_card"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔍 Cek Pesanan dengan Kunci AES (16 Char)"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/etSearchOrderCode"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.2"
+                    android:background="@android:drawable/edit_text"
+                    android:hint="Kode: ORD-..."
+                    android:inputType="text"
+                    android:padding="8dp"
+                    android:textSize="11sp" />
+
+                <EditText
+                    android:id="@+id/etSearchAesKey"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:background="@android:drawable/edit_text"
+                    android:fontFamily="monospace"
+                    android:hint="Kunci 16 Char"
+                    android:inputType="text"
+                    android:padding="8dp"
+                    android:textSize="11sp" />
+
+                <Button
+                    android:id="@+id/btnSearchWithKey"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:layout_marginStart="4dp"
+                    android:backgroundTint="#4A148C"
+                    android:text="Cek"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- KARTU UTAMA: PESANAN AKTIF ANDA (Otomatis Muncul Teratas) -->
         <LinearLayout
             android:id="@+id/cardTrackingDetail"
@@ -272,43 +333,162 @@
                     android:textSize="12sp"
                     android:textStyle="italic" />
 
-                <!-- BADGE KEAMANAN KRIPTOGRAFI AES-256 -->
+                <!-- KARTU KRIPTOGRAFI AES-128 (PERTEMUAN 11 - PRAKTIKUM 14) -->
                 <LinearLayout
-                    android:id="@+id/layoutAesSecurityBadge"
+                    android:id="@+id/cardAesTrackingSection"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="#ECFDF5"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingStart="10dp"
-                    android:paddingTop="6dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="6dp">
+                    android:layout_marginTop="10dp"
+                    android:background="#FFF9C4"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <!-- Header Kriptografi -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🛡️ Kriptografi AES-128 (Pertemuan 11)"
+                            android:textColor="#4A148C"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvCryptoStateBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="#D1FAE5"
+                            android:paddingStart="8dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="8dp"
+                            android:paddingBottom="3dp"
+                            android:text="TERDEKRIPSI"
+                            android:textColor="#065F46"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/tvAesSecurityTitle"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="🔒 Alamat &amp; Catatan Dilindungi AES-256"
-                        android:textColor="#047857"
+                        android:layout_marginTop="3dp"
+                        android:text="Data pesanan diamankan Kunci AES 16-Karakter (AES/CBC/PKCS5PADDING)."
+                        android:textColor="#555555"
+                        android:textSize="11sp" />
+
+                    <!-- Kunci AES 16-Karakter untuk Pesanan Ini -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Kunci AES Pesanan (16 Karakter):"
+                        android:textColor="#333333"
                         android:textSize="11sp"
                         android:textStyle="bold" />
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <EditText
+                            android:id="@+id/etOrderAesKey"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@android:drawable/edit_text"
+                            android:fontFamily="monospace"
+                            android:hint="Kunci 16 Karakter"
+                            android:inputType="text"
+                            android:padding="8dp"
+                            android:text="Qwertyui87651234"
+                            android:textColor="#000000"
+                            android:textSize="12sp" />
+
+                        <Button
+                            android:id="@+id/btnCopyAesKey"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="4dp"
+                            android:backgroundTint="#4A148C"
+                            android:text="Salin"
+                            android:textColor="#FFFFFF"
+                            android:textSize="11sp" />
+
+                        <Button
+                            android:id="@+id/btnResetAesKey"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="4dp"
+                            android:backgroundTint="#757575"
+                            android:text="Reset"
+                            android:textColor="#FFFFFF"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <!-- Tombol Aksi Cek / Dekripsi / Kunci -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnVerifyAndDecrypt"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:backgroundTint="#4A148C"
+                            android:text="🔓 Cek dg Kunci"
+                            android:textColor="#FFFFFF"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <Button
+                            android:id="@+id/btnToggleCipherView"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:backgroundTint="#00838F"
+                            android:text="🔒 Kunci (Ciphertext)"
+                            android:textColor="#FFFFFF"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <!-- Banner Hasil Verifikasi Kunci -->
                     <TextView
-                        android:id="@+id/btnViewCiphertext"
+                        android:id="@+id/tvCryptoVerifyFeedback"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:background="#E8F5E9"
+                        android:padding="6dp"
+                        android:text="✓ Kunci 16 Karakter Cocok! Data transaksi terbaca secara aman."
+                        android:textColor="#2E7D32"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+
+                    <!-- Tombol Buka Alat Lengkap Pertemuan 11 -->
+                    <TextView
+                        android:id="@+id/btnOpenFullPml11"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="#D1FAE5"
-                        android:paddingStart="8dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="4dp"
-                        android:text="Lihat Ciphertext"
-                        android:textColor="#065F46"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
+                        android:layout_gravity="end"
+                        android:layout_marginTop="6dp"
+                        android:text="Buka Simulator Lengkap PML 14 ↗"
+                        android:textColor="#4A148C"
+                        android:textSize="11sp"
+                        android:textStyle="bold|italic" />
                 </LinearLayout>
 
                 <!-- BARIS STATUS & PEMBAYARAN -->
