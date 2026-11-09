@@ -349,17 +349,6 @@ class TrackingFragment : Fragment() {
                 renderCiphertextDisplay(order)
             }
         }
-
-        // Tombol Buka Simulator Lengkap PML 14
-        binding.btnOpenFullPml11.setOnClickListener {
-            val intent = Intent(requireContext(), farhan.zalfanudin.uts.crypto.AesPertemuan11Activity::class.java).apply {
-                putExtra("order_code", order.orderCode)
-                putExtra("secret_key", order.aesKey.ifEmpty { "Qwertyui87651234" })
-                putExtra("customer_name", order.customerName)
-                putExtra("address", order.address)
-            }
-            startActivity(intent)
-        }
     }
 
     private fun performAesKeyVerification(order: Order, keyToTest: String) {

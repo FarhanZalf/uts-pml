@@ -77,3 +77,4 @@ class AesPertemuan11Activity : AppCompatActivity() {
         return true
     }
 }
+
