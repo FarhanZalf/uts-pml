@@ -35,7 +35,7 @@
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
-        <!-- PENCARIAN / CEK PESANAN DENGAN KODE & KUNCI AES 16-CHAR -->
+        <!-- PENCARIAN / CEK PESANAN HANYA DENGAN KUNCI AES 16-CHAR -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -47,51 +47,50 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🔍 Cek Pesanan dengan Kunci AES (16 Char)"
+                android:text="🔍 Cek Pesanan dengan Kunci AES (16 Karakter)"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp"
                 android:textStyle="bold" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Cukup masukkan 16-karakter Kunci AES untuk melacak transaksi"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/etSearchOrderCode"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
-                    android:background="@android:drawable/edit_text"
-                    android:hint="Kode: ORD-..."
-                    android:inputType="text"
-                    android:padding="8dp"
-                    android:textSize="11sp" />
 
                 <EditText
                     android:id="@+id/etSearchAesKey"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
                     android:layout_weight="1"
                     android:background="@android:drawable/edit_text"
                     android:fontFamily="monospace"
-                    android:hint="Kunci 16 Char"
+                    android:hint="Masukkan Kunci AES 16-Karakter"
                     android:inputType="text"
-                    android:padding="8dp"
-                    android:textSize="11sp" />
+                    android:maxLength="16"
+                    android:padding="10dp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/btnSearchWithKey"
                     android:layout_width="wrap_content"
-                    android:layout_height="38dp"
-                    android:layout_marginStart="4dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
                     android:backgroundTint="#4A148C"
                     android:text="Cek"
                     android:textColor="#FFFFFF"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>

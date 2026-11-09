@@ -470,7 +470,12 @@ class CheckoutActivity : AppCompatActivity() {
                         status = createdOrder.status,
                         paymentStatus = createdOrder.paymentStatus.ifEmpty { "unpaid" },
                         paymentMethod = selectedPaymentMethod,
-                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time)
+                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time),
+                        aesKey = createdOrder.aesKey,
+                        rawNameCipher = createdOrder.rawNameCipher,
+                        rawPhoneCipher = createdOrder.rawPhoneCipher,
+                        rawAlamatCipher = createdOrder.rawAlamatCipher,
+                        rawCatatanCipher = createdOrder.rawCatatanCipher
                     )
                     cartDbHelper.saveOrder(orderToSave)
                     cartDbHelper.clearCart()
@@ -480,7 +485,7 @@ class CheckoutActivity : AppCompatActivity() {
                     com.google.firebase.messaging.FirebaseMessaging.getInstance()
                         .subscribeToTopic("order_${createdOrder.orderCode}")
 
-                    showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true, paymentLabel = paymentLabel)
+                    showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true, paymentLabel = paymentLabel, aesKey = createdOrder.aesKey)
                 },
                 onError = { errorMsg ->
                     binding.btnSubmitOrder.isEnabled = true
@@ -490,6 +495,7 @@ class CheckoutActivity : AppCompatActivity() {
                     val dateCode = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Calendar.getInstance().time)
                     val randomSeq = String.format(Locale.getDefault(), "%04d", (1..9999).random())
                     val fallbackCode = "ORD-$dateCode-$randomSeq"
+                    val offlineKey = "ERLES_" + java.util.UUID.randomUUID().toString().replace("-", "").take(10).uppercase()
 
                     val fallbackOrder = farhan.zalfanudin.uts.model.Order(
                         orderCode = fallbackCode,
@@ -502,7 +508,8 @@ class CheckoutActivity : AppCompatActivity() {
                         status = "pending",
                         paymentStatus = "unpaid",
                         paymentMethod = selectedPaymentMethod,
-                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time)
+                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time),
+                        aesKey = offlineKey
                     )
                     cartDbHelper.saveOrder(fallbackOrder)
                     cartDbHelper.clearCart()
@@ -510,7 +517,7 @@ class CheckoutActivity : AppCompatActivity() {
 
                     com.google.firebase.messaging.FirebaseMessaging.getInstance()
                         .subscribeToTopic("order_$fallbackCode")
-                    showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg, paymentLabel = paymentLabel)
+                    showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg, paymentLabel = paymentLabel, aesKey = offlineKey)
                 }
             )
         }
@@ -544,7 +551,8 @@ class CheckoutActivity : AppCompatActivity() {
         customerName: String,
         isServerSynced: Boolean = true,
         offlineNote: String = "",
-        paymentLabel: String = "QRIS"
+        paymentLabel: String = "QRIS",
+        aesKey: String = "Qwertyui87651234"
     ) {
         val syncBadge = if (isServerSynced) {
             "✓ Tersinkronisasi ke Web Admin ERP"
@@ -557,12 +565,13 @@ class CheckoutActivity : AppCompatActivity() {
             Pesanan roti Anda telah berhasil dibuat.
             
             Kode Pesanan: $orderCode
+            Kunci Rahasia AES: $aesKey (16-Karakter)
             Metode Pembayaran: $paymentLabel
             Total Tagihan: ${formatRupiah(grandTotal)}
             Status: Menunggu Konfirmasi (Pending)
             Koneksi: $syncBadge
             
-            Silakan buka tab Pelacakan untuk melakukan pembayaran (QRIS / Transfer BCA).
+            Simpan Kunci AES 16-karakter di atas untuk cek dan lacak pesanan Anda di tab Pelacakan.
         """.trimIndent()
 
         AlertDialog.Builder(this)

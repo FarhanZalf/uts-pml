@@ -329,6 +329,20 @@ class CartDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         return order
     }
 
+    fun getOrderByAesKey(aesKey: String): Order? {
+        val db = readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT * FROM $TABLE_ORDERS WHERE $COLUMN_AES_KEY = ? ORDER BY $COLUMN_ORDER_ID DESC LIMIT 1",
+            arrayOf(aesKey.trim())
+        )
+        var order: Order? = null
+        if (cursor.moveToFirst()) {
+            order = parseOrderFromCursor(cursor)
+        }
+        cursor.close()
+        return order
+    }
+
     fun updateOrderStatus(orderCode: String, newStatus: String): Boolean {
         val db = writableDatabase
         val values = ContentValues().apply {

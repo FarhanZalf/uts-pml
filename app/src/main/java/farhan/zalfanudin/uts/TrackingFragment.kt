@@ -107,37 +107,40 @@ class TrackingFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        // Pencarian & Cek Pesanan dengan Kode & Kunci AES 16-Char
+        // Pencarian & Cek Pesanan Langsung Hanya Menggunakan Kunci AES 16-Char
         binding.btnSearchWithKey.setOnClickListener {
-            val code = binding.etSearchOrderCode.text.toString().trim()
             val key = binding.etSearchAesKey.text.toString().trim()
-            if (code.isEmpty()) {
-                Toast.makeText(requireContext(), "Silakan masukkan kode pesanan terlebih dahulu", Toast.LENGTH_SHORT).show()
+            if (key.isEmpty()) {
+                Toast.makeText(requireContext(), "Silakan masukkan Kunci AES 16-karakter terlebih dahulu", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (key.length != 16) {
+                Toast.makeText(requireContext(), "Panjang Kunci AES wajib tepat 16 karakter (128-bit)!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val localOrder = cartDbHelper.getOrderByCode(code)
+            // 1. Coba cari di database lokal SQLite terlebih dahulu
+            val localOrder = cartDbHelper.getOrderByAesKey(key)
             if (localOrder != null) {
                 displayOrderDetail(localOrder)
-                if (key.isNotEmpty()) {
-                    binding.etOrderAesKey.setText(key)
-                    performAesKeyVerification(localOrder, key)
-                }
+                binding.etOrderAesKey.setText(key)
+                performAesKeyVerification(localOrder, key)
+                Toast.makeText(requireContext(), "Pesanan ditemukan via Kunci AES (Lokal)", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(requireContext(), "Mencari pesanan $code di server...", Toast.LENGTH_SHORT).show()
-                farhan.zalfanudin.uts.network.ApiService.trackOrder(
+                // 2. Jika tidak ada di lokal, cari ke server via API: GET /api/orders/by-key/{key}
+                Toast.makeText(requireContext(), "Mencari pesanan di server via Kunci AES...", Toast.LENGTH_SHORT).show()
+                farhan.zalfanudin.uts.network.ApiService.trackOrderByAesKey(
                     requireContext(),
-                    code,
+                    key,
                     onSuccess = { serverOrder ->
                         cartDbHelper.saveOrder(serverOrder)
                         displayOrderDetail(serverOrder)
-                        if (key.isNotEmpty()) {
-                            binding.etOrderAesKey.setText(key)
-                            performAesKeyVerification(serverOrder, key)
-                        }
+                        binding.etOrderAesKey.setText(key)
+                        performAesKeyVerification(serverOrder, key)
+                        Toast.makeText(requireContext(), "Pesanan ditemukan dari server!", Toast.LENGTH_SHORT).show()
                     },
                     onError = { err ->
-                        Toast.makeText(requireContext(), "Pesanan tidak ditemukan: $err", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Pesanan dengan Kunci AES ini tidak ditemukan: $err", Toast.LENGTH_LONG).show()
                     }
                 )
             }
@@ -300,6 +303,9 @@ class TrackingFragment : Fragment() {
     private fun setupAesCryptographySection(order: Order) {
         val defaultKey = order.aesKey.ifEmpty { "Qwertyui87651234" }
         binding.etOrderAesKey.setText(defaultKey)
+        if (binding.etSearchAesKey.text.isNullOrEmpty()) {
+            binding.etSearchAesKey.setText(defaultKey)
+        }
         binding.tvCryptoVerifyFeedback.visibility = View.GONE
 
         // Default: Terdekripsi

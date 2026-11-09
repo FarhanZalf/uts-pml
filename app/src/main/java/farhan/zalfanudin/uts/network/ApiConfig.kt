@@ -40,6 +40,9 @@ object ApiConfig {
     fun getTrackOrderUrl(context: Context, orderCode: String): String =
         "${getBaseUrl(context)}/orders/track/$orderCode"
 
+    fun getOrderByKeyUrl(context: Context, aesKey: String): String =
+        "${getBaseUrl(context)}/orders/by-key/$aesKey"
+
     fun getConfirmPaymentUrl(context: Context): String =
         "${getBaseUrl(context)}/orders/pay"
 }
