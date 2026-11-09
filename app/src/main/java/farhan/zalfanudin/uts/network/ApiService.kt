@@ -209,6 +209,10 @@ object ApiService {
                         val createdAt = dataObj.optString("created_at", "")
                         val orderId = dataObj.optInt("id", 0)
 
+                        val encInfo = dataObj.optJSONObject("encryption_info")
+                        val rawAlamat = encInfo?.optString("raw_alamat_cipher", "") ?: ""
+                        val rawCatatan = encInfo?.optString("raw_catatan_cipher", "") ?: ""
+
                         val createdOrder = Order(
                             id = orderId,
                             orderCode = orderCode,
@@ -220,7 +224,9 @@ object ApiService {
                             totalPrice = totalPrice,
                             status = status,
                             paymentStatus = paymentStatus,
-                            createdAt = createdAt
+                            createdAt = createdAt,
+                            rawAlamatCipher = rawAlamat,
+                            rawCatatanCipher = rawCatatan
                         )
                         onSuccess(createdOrder)
                     } else {
@@ -294,6 +300,10 @@ object ApiService {
                         val createdAt = dataObj.optString("created_at", "")
                         val orderId = dataObj.optInt("id", 0)
 
+                        val encInfo = dataObj.optJSONObject("encryption_info")
+                        val rawAlamat = encInfo?.optString("raw_alamat_cipher", "") ?: ""
+                        val rawCatatan = encInfo?.optString("raw_catatan_cipher", "") ?: ""
+
                         val trackedOrder = Order(
                             id = orderId,
                             orderCode = code,
@@ -305,7 +315,9 @@ object ApiService {
                             totalPrice = totalPrice,
                             status = status,
                             paymentStatus = paymentStatus,
-                            createdAt = createdAt
+                            createdAt = createdAt,
+                            rawAlamatCipher = rawAlamat,
+                            rawCatatanCipher = rawCatatan
                         )
                         onSuccess(trackedOrder)
                     } else {

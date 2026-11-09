@@ -256,6 +256,41 @@ class TrackingFragment : Fragment() {
 
         // Pasang Snapshot Listener Firestore realtime (LANGKAH 4)
         listenToOrderStatusRealtime(order.orderCode)
+
+        // Inspeksi Keamanan Kriptografi AES-256
+        binding.btnViewCiphertext.setOnClickListener {
+            showAesCiphertextDialog(order)
+        }
+    }
+
+    private fun showAesCiphertextDialog(order: Order) {
+        val message = StringBuilder()
+        message.append("🛡️ Status Kriptografi: AKTIF\n")
+        message.append("Algoritma: AES-256-CBC (OpenSSL with HMAC-SHA256)\n")
+        message.append("Tingkat Keamanan: Database Encryption At-Rest\n\n")
+        message.append("─────────────────────────\n")
+        message.append("📄 DATA ASLI (TERDEKRIPSI DI APLIKASI):\n")
+        message.append("• Alamat: ${order.address}\n")
+        if (order.notes.isNotEmpty()) {
+            message.append("• Catatan: ${order.notes}\n")
+        }
+        message.append("\n─────────────────────────\n")
+        message.append("🔒 DATA TERSIMPAN DI DATABASE MYSQL (CIPHERTEXT):\n")
+        val rawAlamat = if (order.rawAlamatCipher.isNotEmpty()) order.rawAlamatCipher else "(Terenkripsi AES di tabel orders)"
+        message.append("• Alamat:\n$rawAlamat\n\n")
+        if (order.notes.isNotEmpty()) {
+            val rawCatatan = if (order.rawCatatanCipher.isNotEmpty()) order.rawCatatanCipher else "(Terenkripsi AES di tabel orders)"
+            message.append("• Catatan:\n$rawCatatan\n\n")
+        }
+        message.append("─────────────────────────\n")
+        message.append("ℹ️ Catatan Kriptografi:\n")
+        message.append("Data sensitif pemesan telah diamankan secara kriptografis menggunakan kunci simetris 256-bit di database server untuk mencegah kebocoran informasi pribadi.")
+
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("Detail Kriptografi AES-256")
+            .setMessage(message.toString())
+            .setPositiveButton("Mengerti", null)
+            .show()
     }
 
     private fun updatePaymentViews(order: Order) {

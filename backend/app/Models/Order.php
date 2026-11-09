@@ -29,6 +29,33 @@ class Order extends Model
     ];
 
     /**
+     * Appended attributes for cryptographic inspection.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'encryption_info',
+    ];
+
+    /**
+     * Returns cryptographic metadata (raw DB ciphertext vs decrypted) for auditing.
+     *
+     * @return array<string, mixed>
+     */
+    public function getEncryptionInfoAttribute(): array
+    {
+        $rawAlamat = $this->attributes['alamat'] ?? '';
+        $rawCatatan = $this->attributes['catatan'] ?? '';
+
+        return [
+            'cipher' => 'AES-256-CBC',
+            'is_encrypted' => SafeEncrypted::isEncrypted($rawAlamat) || SafeEncrypted::isEncrypted($rawCatatan),
+            'raw_alamat_cipher' => $rawAlamat,
+            'raw_catatan_cipher' => $rawCatatan,
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

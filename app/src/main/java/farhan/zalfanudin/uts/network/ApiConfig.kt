@@ -12,12 +12,17 @@ object ApiConfig {
     private const val PREFS_NAME = "erles_api_prefs"
     private const val KEY_BASE_URL = "pref_base_url"
 
-    // Host backend PC untuk pengujian HP fisik via Wi-Fi:
-    const val DEFAULT_BASE_URL = "http://192.168.1.78:8000/api"
+    // Host backend PC (LAN Wi-Fi: 192.168.0.196:8000 / USB adb reverse: 127.0.0.1:8000):
+    const val DEFAULT_BASE_URL = "http://192.168.0.196:8000/api"
 
     fun getBaseUrl(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_BASE_URL, DEFAULT_BASE_URL) ?: DEFAULT_BASE_URL
+        val url = prefs.getString(KEY_BASE_URL, DEFAULT_BASE_URL) ?: DEFAULT_BASE_URL
+        if (url.contains("192.168.1.78")) {
+            setBaseUrl(context, DEFAULT_BASE_URL)
+            return DEFAULT_BASE_URL
+        }
+        return url
     }
 
     fun setBaseUrl(context: Context, newUrl: String) {

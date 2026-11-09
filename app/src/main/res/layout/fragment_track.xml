@@ -272,6 +272,45 @@
                     android:textSize="12sp"
                     android:textStyle="italic" />
 
+                <!-- BADGE KEAMANAN KRIPTOGRAFI AES-256 -->
+                <LinearLayout
+                    android:id="@+id/layoutAesSecurityBadge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="#ECFDF5"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="6dp">
+
+                    <TextView
+                        android:id="@+id/tvAesSecurityTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🔒 Alamat &amp; Catatan Dilindungi AES-256"
+                        android:textColor="#047857"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btnViewCiphertext"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="#D1FAE5"
+                        android:paddingStart="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="4dp"
+                        android:text="Lihat Ciphertext"
+                        android:textColor="#065F46"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
                 <!-- BARIS STATUS & PEMBAYARAN -->
                 <LinearLayout
                     android:id="@+id/layoutPaymentCard"

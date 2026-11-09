@@ -12,7 +12,9 @@ data class Order(
     val status: String = "pending",
     val paymentStatus: String = "unpaid",
     val paymentMethod: String = "qris",
-    val createdAt: String
+    val createdAt: String,
+    val rawAlamatCipher: String = "",
+    val rawCatatanCipher: String = ""
 ) {
     val isPickup: Boolean
         get() = address.startsWith("Outlet Erles Bakery", ignoreCase = true)

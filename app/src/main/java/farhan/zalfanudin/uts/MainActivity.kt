@@ -214,7 +214,7 @@ class MainActivity : AppCompatActivity() {
             val pad = (20 * resources.displayMetrics.density).toInt()
             setPadding(pad, 12, pad, 12)
             addView(android.widget.TextView(this@MainActivity).apply {
-                text = "Pilih atau masukkan alamat URL Backend REST API:\n\n• USB Kabel / ADB Wireless:\n  http://127.0.0.1:8000/api\n\n• Wi-Fi LAN Laptop:\n  http://192.168.1.78:8000/api"
+                text = "Pilih atau masukkan alamat URL Backend REST API:\n\n• USB Kabel (adb reverse):\n  http://127.0.0.1:8000/api\n\n• Wi-Fi LAN Laptop:\n  http://192.168.0.196:8000/api"
                 textSize = 12f
                 setTextColor(androidx.core.content.ContextCompat.getColor(this@MainActivity, R.color.text_secondary))
                 setPadding(0, 0, 0, (10 * resources.displayMetrics.density).toInt())

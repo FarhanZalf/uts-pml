@@ -49,5 +49,22 @@ class SafeEncrypted implements CastsAttributes
             return Crypt::encryptString((string) $value);
         }
     }
+
+    /**
+     * Helper to detect if a value is an encrypted payload.
+     */
+    public static function isEncrypted(mixed $value): bool
+    {
+        if (empty($value) || !is_string($value)) {
+            return false;
+        }
+
+        try {
+            Crypt::decryptString($value);
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
 }
 
