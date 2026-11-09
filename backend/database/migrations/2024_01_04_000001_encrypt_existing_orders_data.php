@@ -17,10 +17,32 @@ return new class extends Migration
             return;
         }
 
+        // Ubah kolom customer_name dan customer_phone ke TEXT agar muat ciphertext AES
+        Schema::table('orders', function ($table) {
+            $table->text('customer_name')->change();
+            $table->text('customer_phone')->change();
+        });
+
         $orders = DB::table('orders')->get();
 
         foreach ($orders as $order) {
             $updates = [];
+
+            if (!empty($order->customer_name)) {
+                try {
+                    Crypt::decryptString($order->customer_name);
+                } catch (\Throwable) {
+                    $updates['customer_name'] = Crypt::encryptString($order->customer_name);
+                }
+            }
+
+            if (!empty($order->customer_phone)) {
+                try {
+                    Crypt::decryptString($order->customer_phone);
+                } catch (\Throwable) {
+                    $updates['customer_phone'] = Crypt::encryptString($order->customer_phone);
+                }
+            }
 
             if (!empty($order->alamat)) {
                 try {

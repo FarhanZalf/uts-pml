@@ -44,12 +44,16 @@ class Order extends Model
      */
     public function getEncryptionInfoAttribute(): array
     {
+        $rawName = $this->attributes['customer_name'] ?? '';
+        $rawPhone = $this->attributes['customer_phone'] ?? '';
         $rawAlamat = $this->attributes['alamat'] ?? '';
         $rawCatatan = $this->attributes['catatan'] ?? '';
 
         return [
             'cipher' => 'AES-256-CBC',
-            'is_encrypted' => SafeEncrypted::isEncrypted($rawAlamat) || SafeEncrypted::isEncrypted($rawCatatan),
+            'is_encrypted' => SafeEncrypted::isEncrypted($rawAlamat) || SafeEncrypted::isEncrypted($rawName),
+            'raw_name_cipher' => $rawName,
+            'raw_phone_cipher' => $rawPhone,
             'raw_alamat_cipher' => $rawAlamat,
             'raw_catatan_cipher' => $rawCatatan,
         ];
@@ -64,6 +68,8 @@ class Order extends Model
             'total_price' => 'decimal:2',
             'paid_amount' => 'decimal:2',
             'tanggal_ambil' => 'date',
+            'customer_name' => SafeEncrypted::class,
+            'customer_phone' => SafeEncrypted::class,
             'alamat' => SafeEncrypted::class,
             'catatan' => SafeEncrypted::class,
         ];
