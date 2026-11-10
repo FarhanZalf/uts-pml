@@ -107,6 +107,23 @@ class TrackingFragment : Fragment() {
     }
 
     private fun setupListeners() {
+        // Tombol Tempel Kunci AES dari Clipboard
+        binding.btnPasteAesKey.setOnClickListener {
+            val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val item = clipboard.primaryClip?.getItemAt(0)
+            val clipText = item?.text?.toString()?.trim() ?: ""
+            if (clipText.isNotEmpty()) {
+                val cleanKey = if (clipText.length >= 16) clipText.take(16) else clipText
+                binding.etSearchAesKey.setText(cleanKey)
+                Toast.makeText(requireContext(), "Kunci ditempel dari clipboard: $cleanKey", Toast.LENGTH_SHORT).show()
+                if (cleanKey.length == 16) {
+                    binding.btnSearchWithKey.performClick()
+                }
+            } else {
+                Toast.makeText(requireContext(), "Clipboard kosong. Salin kunci terlebih dahulu.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         // Pencarian & Cek Pesanan Langsung Hanya Menggunakan Kunci AES 16-Char
         binding.btnSearchWithKey.setOnClickListener {
             val key = binding.etSearchAesKey.text.toString().trim()
@@ -123,7 +140,7 @@ class TrackingFragment : Fragment() {
             val localOrder = cartDbHelper.getOrderByAesKey(key)
             if (localOrder != null) {
                 displayOrderDetail(localOrder)
-                binding.etOrderAesKey.setText(key)
+                binding.tvOrderAesKeyDisplay.text = key
                 performAesKeyVerification(localOrder, key)
                 Toast.makeText(requireContext(), "Pesanan ditemukan via Kunci AES (Lokal)", Toast.LENGTH_SHORT).show()
             } else {
@@ -135,7 +152,7 @@ class TrackingFragment : Fragment() {
                     onSuccess = { serverOrder ->
                         cartDbHelper.saveOrder(serverOrder)
                         displayOrderDetail(serverOrder)
-                        binding.etOrderAesKey.setText(key)
+                        binding.tvOrderAesKeyDisplay.text = key
                         performAesKeyVerification(serverOrder, key)
                         Toast.makeText(requireContext(), "Pesanan ditemukan dari server!", Toast.LENGTH_SHORT).show()
                     },
@@ -302,7 +319,7 @@ class TrackingFragment : Fragment() {
 
     private fun setupAesCryptographySection(order: Order) {
         val defaultKey = order.aesKey.ifEmpty { "Qwertyui87651234" }
-        binding.etOrderAesKey.setText(defaultKey)
+        binding.tvOrderAesKeyDisplay.text = defaultKey
         if (binding.etSearchAesKey.text.isNullOrEmpty()) {
             binding.etSearchAesKey.setText(defaultKey)
         }
@@ -314,34 +331,30 @@ class TrackingFragment : Fragment() {
         binding.tvCryptoStateBadge.setBackgroundColor(android.graphics.Color.parseColor("#D1FAE5"))
         binding.tvCryptoStateBadge.setTextColor(android.graphics.Color.parseColor("#065F46"))
 
-        // Tombol Salin Kunci
-        binding.btnCopyAesKey.setOnClickListener {
-            val currentKey = binding.etOrderAesKey.text.toString().trim()
+        val copyAction = {
             val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-            val clip = android.content.ClipData.newPlainText("Order AES Key", currentKey)
+            val clip = android.content.ClipData.newPlainText("Order AES Key", defaultKey)
             clipboard.setPrimaryClip(clip)
-            Toast.makeText(requireContext(), "Kunci AES 16-karakter disalin!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Kunci AES 16-karakter disalin: $defaultKey", Toast.LENGTH_SHORT).show()
         }
 
-        // Tombol Reset Kunci
-        binding.btnResetAesKey.setOnClickListener {
-            binding.etOrderAesKey.setText(defaultKey)
-            performAesKeyVerification(order, defaultKey)
-            Toast.makeText(requireContext(), "Kunci direset ke kunci asli pesanan", Toast.LENGTH_SHORT).show()
-        }
+        // Tap pada tampilan kunci atau tombol salin -> Menyalin Kunci AES
+        binding.tvOrderAesKeyDisplay.setOnClickListener { copyAction() }
+        binding.btnCopyAesKey.setOnClickListener { copyAction() }
 
-        // Tombol Cek Pesanan dengan Kunci Ini
+        // Tombol Salin ke Kotak Pencarian
         binding.btnVerifyAndDecrypt.setOnClickListener {
-            val keyToTest = binding.etOrderAesKey.text.toString().trim()
-            performAesKeyVerification(order, keyToTest)
+            copyAction()
+            binding.etSearchAesKey.setText(defaultKey)
+            binding.scrollTrack.smoothScrollTo(0, 0)
+            binding.btnSearchWithKey.performClick()
         }
 
         // Tombol Kunci Kembali / Toggle Ciphertext
         binding.btnToggleCipherView.setOnClickListener {
             if (isCiphertextMode) {
                 // Kembalikan ke Plaintext
-                val currentKey = binding.etOrderAesKey.text.toString().trim()
-                performAesKeyVerification(order, currentKey)
+                performAesKeyVerification(order, defaultKey)
             } else {
                 // Tampilkan Ciphertext
                 isCiphertextMode = true

@@ -83,10 +83,21 @@
                     android:textStyle="bold" />
 
                 <Button
+                    android:id="@+id/btnPasteAesKey"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="4dp"
+                    android:backgroundTint="#6B21A8"
+                    android:text="Tempel"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <Button
                     android:id="@+id/btnSearchWithKey"
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
-                    android:layout_marginStart="6dp"
+                    android:layout_marginStart="4dp"
                     android:backgroundTint="#4A148C"
                     android:text="Cek"
                     android:textColor="#FFFFFF"
@@ -381,12 +392,12 @@
                         android:textColor="#555555"
                         android:textSize="11sp" />
 
-                    <!-- Kunci AES 16-Karakter untuk Pesanan Ini -->
+                    <!-- Kunci AES 16-Karakter untuk Pesanan Ini (Otomatis Dibuat Sistem - Cuma Bisa Nyalin) -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Kunci AES Pesanan (16 Karakter):"
+                        android:text="Kunci AES Pesanan (Otomatis Dibuat Sistem - 16 Karakter):"
                         android:textColor="#333333"
                         android:textSize="11sp"
                         android:textStyle="bold" />
@@ -398,39 +409,31 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <EditText
-                            android:id="@+id/etOrderAesKey"
+                        <TextView
+                            android:id="@+id/tvOrderAesKeyDisplay"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="42dp"
                             android:layout_weight="1"
-                            android:background="@android:drawable/edit_text"
+                            android:background="@drawable/bg_search_bar"
                             android:fontFamily="monospace"
-                            android:hint="Kunci 16 Karakter"
-                            android:inputType="text"
-                            android:padding="8dp"
-                            android:text="Qwertyui87651234"
-                            android:textColor="#000000"
-                            android:textSize="12sp" />
+                            android:gravity="center_vertical"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:text="ERLES_XXXXXXXXXX"
+                            android:textColor="#4A148C"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
 
                         <Button
                             android:id="@+id/btnCopyAesKey"
                             android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:layout_marginStart="4dp"
+                            android:layout_height="42dp"
+                            android:layout_marginStart="6dp"
                             android:backgroundTint="#4A148C"
-                            android:text="Salin"
+                            android:text="📋 Salin Kunci"
                             android:textColor="#FFFFFF"
-                            android:textSize="11sp" />
-
-                        <Button
-                            android:id="@+id/btnResetAesKey"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:layout_marginStart="4dp"
-                            android:backgroundTint="#757575"
-                            android:text="Reset"
-                            android:textColor="#FFFFFF"
-                            android:textSize="11sp" />
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <!-- Tombol Aksi Cek / Dekripsi / Kunci -->
@@ -446,7 +449,7 @@
                             android:layout_height="40dp"
                             android:layout_weight="1"
                             android:backgroundTint="#4A148C"
-                            android:text="🔓 Cek dg Kunci"
+                            android:text="🔍 Salin ke Pencarian"
                             android:textColor="#FFFFFF"
                             android:textSize="11sp"
                             android:textStyle="bold" />

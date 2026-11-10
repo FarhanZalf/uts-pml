@@ -3,6 +3,8 @@ package farhan.zalfanudin.uts
 import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -578,7 +580,12 @@ class CheckoutActivity : AppCompatActivity() {
             .setTitle("Pesanan Berhasil Dibuat!")
             .setMessage(message)
             .setCancelable(false)
-            .setPositiveButton("Bayar & Lacak Sekarang") { _, _ ->
+            .setPositiveButton("Salin Kunci & Lacak") { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("Order AES Key", aesKey)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, "Kunci AES 16-karakter disalin ke clipboard!", Toast.LENGTH_SHORT).show()
+
                 val trackIntent = Intent(this, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                     putExtra("kode_pesanan", orderCode)
@@ -587,6 +594,12 @@ class CheckoutActivity : AppCompatActivity() {
                 }
                 startActivity(trackIntent)
                 finish()
+            }
+            .setNeutralButton("Salin Kunci") { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("Order AES Key", aesKey)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, "Kunci AES 16-karakter disalin ke clipboard!", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Tutup") { _, _ ->
                 finish()
