@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -18,6 +20,14 @@ object SupabaseStorageUtil {
     const val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvaHpkYXVhcnh6YmN5bnh2Z3ByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNjg2ODksImV4cCI6MjEwNjg0NDY4OX0.MXoM_uCKhpeii37rZAtp6kaTU8BWEdiLoABphVKa7kU"
     const val BUCKET_NAME = "bukti-pembayaran"
 
+    // =========================================================================
+    // [MODEL 1: THREADING MANUAL DENGAN JAVA EXECUTOR & MAIN HANDLER]
+    // =========================================================================
+    // 1. Thread Latar Belakang (Worker Thread):
+    //    Executors.newSingleThreadExecutor() mengeksekusi operasi upload & kompresi.
+    // 2. Thread Utama (Main Thread / UI Thread):
+    //    Handler(Looper.getMainLooper()) mem-posting callback kembali ke UI Thread.
+    // =========================================================================
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -126,5 +136,81 @@ object SupabaseStorageUtil {
             newWidth = (maxDimension * ratio).toInt()
         }
         return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+    }
+
+    // =========================================================================
+    // [MODEL 2: ASYNCHRONOUS DENGAN KOTLIN COROUTINES (DISPATCHERS.IO & MAIN)]
+    // =========================================================================
+    // 1. Dispatchers.IO:
+    //    Menjalankan proses kompresi gambar & koneksi HTTP Network I/O di Background Thread.
+    // 2. Dispatchers.Main:
+    //    Mem-posting hasil pemanggilan sukses/gagal ke Main Thread (UI Thread)
+    //    secara deklaratif tanpa perlu manual Handler.
+    // =========================================================================
+    suspend fun uploadPaymentProofCoroutine(
+        context: Context,
+        imageUri: Uri,
+        orderCode: String,
+        onSuccess: (publicUrl: String, bitmap: Bitmap) -> Unit,
+        onError: (errorMessage: String) -> Unit
+    ) {
+        // [BACKGROUND THREAD / COROUTINE WORKER - DISPATCHERS.IO]
+        withContext(Dispatchers.IO) {
+            try {
+                val inputStream: InputStream? = context.contentResolver.openInputStream(imageUri)
+                if (inputStream == null) {
+                    // [MAIN THREAD] Callback error ke UI Thread
+                    withContext(Dispatchers.Main) { onError("Gagal membuka file gambar dari galeri.") }
+                    return@withContext
+                }
+
+                val originalBitmap = BitmapFactory.decodeStream(inputStream)
+                inputStream.close()
+
+                if (originalBitmap == null) {
+                    withContext(Dispatchers.Main) { onError("Format gambar tidak dikenali.") }
+                    return@withContext
+                }
+
+                val scaledBitmap = scaleBitmapIfNeeded(originalBitmap, maxDimension = 1280)
+                val outputStream = ByteArrayOutputStream()
+                scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+                val imageBytes = outputStream.toByteArray()
+
+                val fileName = "bukti_${orderCode}_${System.currentTimeMillis()}.jpg"
+                val uploadEndpoint = "$SUPABASE_URL/storage/v1/object/$BUCKET_NAME/$fileName"
+
+                val url = URL(uploadEndpoint)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Authorization", "Bearer $SUPABASE_ANON_KEY")
+                conn.setRequestProperty("apikey", SUPABASE_ANON_KEY)
+                conn.setRequestProperty("Content-Type", "image/jpeg")
+                conn.doOutput = true
+
+                conn.outputStream.use { os ->
+                    os.write(imageBytes)
+                    os.flush()
+                }
+
+                val responseCode = conn.responseCode
+                if (responseCode in 200..299) {
+                    val publicUrl = "$SUPABASE_URL/storage/v1/object/public/$BUCKET_NAME/$fileName"
+                    // [MAIN THREAD / UI THREAD] Callback sukses kembali ke thread utama
+                    withContext(Dispatchers.Main) {
+                        onSuccess(publicUrl, scaledBitmap)
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        onError("Gagal mengunggah ke Supabase (HTTP $responseCode)")
+                    }
+                }
+                conn.disconnect()
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onError("Terjadi kesalahan jaringan: ${e.localizedMessage ?: e.message}")
+                }
+            }
+        }
     }
 }

@@ -1,6 +1,8 @@
 package farhan.zalfanudin.uts.crypto
 
 import android.util.Base64
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.security.GeneralSecurityException
 import java.security.SecureRandom
 import java.util.StringTokenizer
@@ -69,5 +71,38 @@ object AesPertemuan11 {
             ""
         }
     }
+
+    // =========================================================================
+    // PENERAPAN KOTLIN COROUTINE & THREADING (SESUAI MATERI PML)
+    // =========================================================================
+    // 1. Dispatchers.Default / Dispatchers.IO:
+    //    Menjalankan proses enkripsi & dekripsi AES yang memakan siklus CPU
+    //    di THREAD LATAR BELAKANG (Background Worker Thread) via Kotlin Coroutine.
+    // 2. Dispatchers.Main (Main Thread / UI Thread):
+    //    Thread utama yang memanggil coroutine ini dan menerima hasil teks pulih
+    //    untuk langsung ditampilkan ke komponen UI (TextView, Toast, Card).
+    // =========================================================================
+
+    /**
+     * Enkripsi AES asinkron berbasis KOTLIN COROUTINE.
+     * Menggunakan withContext(Dispatchers.Default) agar tidak membebani Main Thread.
+     */
+    suspend fun encryptCoroutine(plainText: String, secretKey: SecretKey?, iv: IvParameterSpec): String =
+        withContext(Dispatchers.Default) {
+            // [BACKGROUND THREAD / COROUTINE WORKER]
+            // Komputasi matematis cipher AES dijalankan di background thread
+            encrypt(plainText, secretKey, iv)
+        }
+
+    /**
+     * Dekripsi AES asinkron berbasis KOTLIN COROUTINE.
+     * Menggunakan withContext(Dispatchers.Default) agar tidak membekukan (freeze) Main Thread.
+     */
+    suspend fun decryptCoroutine(encryptedText: String, secretKey: SecretKey?): String =
+        withContext(Dispatchers.Default) {
+            // [BACKGROUND THREAD / COROUTINE WORKER]
+            // Operasi dekripsi byte array AES diproses di background thread
+            decrypt(encryptedText, secretKey)
+        }
 }
 

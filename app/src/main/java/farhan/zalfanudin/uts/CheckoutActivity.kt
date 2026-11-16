@@ -22,6 +22,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -479,15 +483,28 @@ class CheckoutActivity : AppCompatActivity() {
                         rawAlamatCipher = createdOrder.rawAlamatCipher,
                         rawCatatanCipher = createdOrder.rawCatatanCipher
                     )
-                    cartDbHelper.saveOrder(orderToSave)
-                    cartDbHelper.clearCart()
-                    syncOrderToFirestore(orderToSave)
 
-                    // Subscribe ke topic FCM untuk menerima pembaruan status pesanan realtime
-                    com.google.firebase.messaging.FirebaseMessaging.getInstance()
-                        .subscribeToTopic("order_${createdOrder.orderCode}")
+                    // =========================================================================
+                    // [KOTLIN COROUTINE & THREADING MODEL - ORDER BERHASIL DISINKRONISASI]
+                    // 1. Dispatchers.IO (Background Thread): Menyimpan ke SQLite & Firestore secara asinkron
+                    // 2. Dispatchers.Main (Main Thread / UI Thread): Menampilkan Dialog Konfirmasi ke Pengguna
+                    // =========================================================================
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        // [BACKGROUND THREAD - DISPATCHERS.IO]
+                        // Operasi Disk Database SQLite & Network Firestore di thread latar belakang
+                        cartDbHelper.saveOrder(orderToSave)
+                        cartDbHelper.clearCart()
+                        syncOrderToFirestore(orderToSave)
 
-                    showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true, paymentLabel = paymentLabel, aesKey = createdOrder.aesKey)
+                        // [MAIN THREAD / UI THREAD - DISPATCHERS.MAIN]
+                        // Kembali ke thread utama untuk subscribe FCM dan menampilkan Dialog UI
+                        withContext(Dispatchers.Main) {
+                            com.google.firebase.messaging.FirebaseMessaging.getInstance()
+                                .subscribeToTopic("order_${createdOrder.orderCode}")
+
+                            showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true, paymentLabel = paymentLabel, aesKey = createdOrder.aesKey)
+                        }
+                    }
                 },
                 onError = { errorMsg ->
                     binding.btnSubmitOrder.isEnabled = true
@@ -513,13 +530,24 @@ class CheckoutActivity : AppCompatActivity() {
                         createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time),
                         aesKey = offlineKey
                     )
-                    cartDbHelper.saveOrder(fallbackOrder)
-                    cartDbHelper.clearCart()
-                    syncOrderToFirestore(fallbackOrder)
 
-                    com.google.firebase.messaging.FirebaseMessaging.getInstance()
-                        .subscribeToTopic("order_$fallbackCode")
-                    showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg, paymentLabel = paymentLabel, aesKey = offlineKey)
+                    // =========================================================================
+                    // [KOTLIN COROUTINE & THREADING MODEL - FALLBACK OFFLINE]
+                    // Menyimpan transaksi offline ke SQLite di background thread lalu membuka dialog di UI thread
+                    // =========================================================================
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        // [BACKGROUND THREAD - DISPATCHERS.IO]
+                        cartDbHelper.saveOrder(fallbackOrder)
+                        cartDbHelper.clearCart()
+                        syncOrderToFirestore(fallbackOrder)
+
+                        // [MAIN THREAD / UI THREAD - DISPATCHERS.MAIN]
+                        withContext(Dispatchers.Main) {
+                            com.google.firebase.messaging.FirebaseMessaging.getInstance()
+                                .subscribeToTopic("order_$fallbackCode")
+                            showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg, paymentLabel = paymentLabel, aesKey = offlineKey)
+                        }
+                    }
                 }
             )
         }
