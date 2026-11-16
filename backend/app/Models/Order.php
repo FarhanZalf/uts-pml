@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -28,6 +29,37 @@ class Order extends Model
     ];
 
     /**
+     * Appended attributes for cryptographic inspection.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'encryption_info',
+    ];
+
+    /**
+     * Returns cryptographic metadata (raw DB ciphertext vs decrypted) for auditing.
+     *
+     * @return array<string, mixed>
+     */
+    public function getEncryptionInfoAttribute(): array
+    {
+        $rawName = $this->attributes['customer_name'] ?? '';
+        $rawPhone = $this->attributes['customer_phone'] ?? '';
+        $rawAlamat = $this->attributes['alamat'] ?? '';
+        $rawCatatan = $this->attributes['catatan'] ?? '';
+
+        return [
+            'cipher' => 'AES-256-CBC',
+            'is_encrypted' => SafeEncrypted::isEncrypted($rawAlamat) || SafeEncrypted::isEncrypted($rawName),
+            'raw_name_cipher' => $rawName,
+            'raw_phone_cipher' => $rawPhone,
+            'raw_alamat_cipher' => $rawAlamat,
+            'raw_catatan_cipher' => $rawCatatan,
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -36,6 +68,10 @@ class Order extends Model
             'total_price' => 'decimal:2',
             'paid_amount' => 'decimal:2',
             'tanggal_ambil' => 'date',
+            'customer_name' => SafeEncrypted::class,
+            'customer_phone' => SafeEncrypted::class,
+            'alamat' => SafeEncrypted::class,
+            'catatan' => SafeEncrypted::class,
         ];
     }
 

@@ -209,6 +209,14 @@ object ApiService {
                         val createdAt = dataObj.optString("created_at", "")
                         val orderId = dataObj.optInt("id", 0)
 
+                        val encInfo = dataObj.optJSONObject("encryption_info")
+                        val aesKey = dataObj.optString("aes_key", "")
+                            .ifEmpty { encInfo?.optString("aes_key", "Qwertyui87651234") ?: "Qwertyui87651234" }
+                        val rawName = encInfo?.optString("raw_name_cipher", "") ?: ""
+                        val rawPhone = encInfo?.optString("raw_phone_cipher", "") ?: ""
+                        val rawAlamat = encInfo?.optString("raw_alamat_cipher", "") ?: ""
+                        val rawCatatan = encInfo?.optString("raw_catatan_cipher", "") ?: ""
+
                         val createdOrder = Order(
                             id = orderId,
                             orderCode = orderCode,
@@ -220,7 +228,12 @@ object ApiService {
                             totalPrice = totalPrice,
                             status = status,
                             paymentStatus = paymentStatus,
-                            createdAt = createdAt
+                            createdAt = createdAt,
+                            aesKey = aesKey,
+                            rawNameCipher = rawName,
+                            rawPhoneCipher = rawPhone,
+                            rawAlamatCipher = rawAlamat,
+                            rawCatatanCipher = rawCatatan
                         )
                         onSuccess(createdOrder)
                     } else {
@@ -294,6 +307,14 @@ object ApiService {
                         val createdAt = dataObj.optString("created_at", "")
                         val orderId = dataObj.optInt("id", 0)
 
+                        val encInfo = dataObj.optJSONObject("encryption_info")
+                        val aesKey = dataObj.optString("aes_key", "")
+                            .ifEmpty { encInfo?.optString("aes_key", "Qwertyui87651234") ?: "Qwertyui87651234" }
+                        val rawName = encInfo?.optString("raw_name_cipher", "") ?: ""
+                        val rawPhone = encInfo?.optString("raw_phone_cipher", "") ?: ""
+                        val rawAlamat = encInfo?.optString("raw_alamat_cipher", "") ?: ""
+                        val rawCatatan = encInfo?.optString("raw_catatan_cipher", "") ?: ""
+
                         val trackedOrder = Order(
                             id = orderId,
                             orderCode = code,
@@ -305,7 +326,12 @@ object ApiService {
                             totalPrice = totalPrice,
                             status = status,
                             paymentStatus = paymentStatus,
-                            createdAt = createdAt
+                            createdAt = createdAt,
+                            aesKey = aesKey,
+                            rawNameCipher = rawName,
+                            rawPhoneCipher = rawPhone,
+                            rawAlamatCipher = rawAlamat,
+                            rawCatatanCipher = rawCatatan
                         )
                         onSuccess(trackedOrder)
                     } else {
@@ -319,6 +345,102 @@ object ApiService {
             { error ->
                 val errorMsg = error.message ?: "Pesanan tidak ditemukan di server"
                 Log.e(TAG, "Volley trackOrder error: $errorMsg")
+                onError(errorMsg)
+            }
+        ) {
+            override fun getHeaders(): MutableMap<String, String> {
+                return mutableMapOf(
+                    "Accept" to "application/json",
+                    "Content-Type" to "application/json"
+                )
+            }
+        }
+
+        request.retryPolicy = DefaultRetryPolicy(
+            TIMEOUT_MS,
+            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        )
+
+        VolleySingleton.getInstance(context).addToRequestQueue(request)
+    }
+
+    /**
+     * Melacak status pesanan publik langsung menggunakan Kunci AES 16-Karakter: GET /api/orders/by-key/{aesKey}
+     */
+    fun trackOrderByAesKey(
+        context: Context,
+        aesKey: String,
+        onSuccess: (Order) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val url = ApiConfig.getOrderByKeyUrl(context, aesKey.trim())
+
+        val request = object : JsonObjectRequest(
+            Method.GET,
+            url,
+            null,
+            { response ->
+                try {
+                    val dataObj = response.optJSONObject("data")
+                    if (dataObj != null) {
+                        val code = dataObj.optString("kode_pesanan", "")
+                        val customerName = dataObj.optString("customer_name", "")
+                        val customerPhone = dataObj.optString("customer_phone", "")
+                        val address = dataObj.optString("alamat", "")
+                        val notes = dataObj.optString("catatan", "")
+                        val pickupDate = dataObj.optString("tanggal_ambil", "")
+                        val totalPrice = dataObj.optDouble("total_price", 0.0)
+                        val status = dataObj.optString("status", "pending")
+                        val paymentStatus = dataObj.optString("payment_status", "unpaid")
+                        val createdAt = dataObj.optString("created_at", "")
+                        val orderId = dataObj.optInt("id", 0)
+
+                        val encInfo = dataObj.optJSONObject("encryption_info")
+                        val key = dataObj.optString("aes_key", "")
+                            .ifEmpty { encInfo?.optString("aes_key", aesKey) ?: aesKey }
+                        val rawName = encInfo?.optString("raw_name_cipher", "") ?: ""
+                        val rawPhone = encInfo?.optString("raw_phone_cipher", "") ?: ""
+                        val rawAlamat = encInfo?.optString("raw_alamat_cipher", "") ?: ""
+                        val rawCatatan = encInfo?.optString("raw_catatan_cipher", "") ?: ""
+
+                        val trackedOrder = Order(
+                            id = orderId,
+                            orderCode = code,
+                            customerName = customerName,
+                            customerPhone = customerPhone,
+                            address = address,
+                            notes = notes,
+                            pickupDate = pickupDate,
+                            totalPrice = totalPrice,
+                            status = status,
+                            paymentStatus = paymentStatus,
+                            createdAt = createdAt,
+                            aesKey = key,
+                            rawNameCipher = rawName,
+                            rawPhoneCipher = rawPhone,
+                            rawAlamatCipher = rawAlamat,
+                            rawCatatanCipher = rawCatatan
+                        )
+                        onSuccess(trackedOrder)
+                    } else {
+                        onError("Pesanan dengan Kunci AES ini tidak ditemukan")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing trackOrderByAesKey response: ${e.message}", e)
+                    onError("Gagal memproses data pelacakan dari server")
+                }
+            },
+            { error ->
+                var errorMsg = "Pesanan dengan Kunci AES tersebut tidak ditemukan di server"
+                try {
+                    error.networkResponse?.data?.let { data ->
+                        val respStr = String(data, Charsets.UTF_8)
+                        val errorJson = JSONObject(respStr)
+                        errorMsg = errorJson.optString("message", errorMsg)
+                    }
+                } catch (_: Exception) {}
+                Log.e(TAG, "Volley trackOrderByAesKey error: $errorMsg")
                 onError(errorMsg)
             }
         ) {
@@ -415,6 +537,63 @@ object ApiService {
                 } catch (_: Exception) {}
 
                 Log.e(TAG, "Volley confirmPayment error: $errorMsg")
+                onError(errorMsg)
+            }
+        ) {
+            override fun getHeaders(): MutableMap<String, String> {
+                return mutableMapOf(
+                    "Accept" to "application/json",
+                    "Content-Type" to "application/json"
+                )
+            }
+        }
+
+        request.retryPolicy = DefaultRetryPolicy(
+            TIMEOUT_MS,
+            0,
+            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        )
+
+        VolleySingleton.getInstance(context).addToRequestQueue(request)
+    }
+
+    /**
+     * Verifikasi & Dekripsi Pesanan dengan Kunci AES 16-Karakter ke Backend: POST /api/orders/verify-key
+     */
+    fun verifyOrderKey(
+        context: Context,
+        orderCode: String,
+        aesKey: String,
+        onSuccess: (JSONObject) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val url = "${ApiConfig.getBaseUrl(context)}/orders/verify-key"
+        val payload = JSONObject().apply {
+            put("kode_pesanan", orderCode.trim())
+            put("aes_key", aesKey.trim())
+        }
+
+        val request = object : JsonObjectRequest(
+            Method.POST,
+            url,
+            payload,
+            { response ->
+                if (response.optBoolean("success", false)) {
+                    val data = response.optJSONObject("data") ?: JSONObject()
+                    onSuccess(data)
+                } else {
+                    onError(response.optString("message", "Kunci AES tidak cocok"))
+                }
+            },
+            { error ->
+                var errorMsg = "Kunci AES 16-karakter SALAH atau gagal diverifikasi!"
+                try {
+                    error.networkResponse?.data?.let { data ->
+                        val respStr = String(data, Charsets.UTF_8)
+                        val errorJson = JSONObject(respStr)
+                        errorMsg = errorJson.optString("message", errorMsg)
+                    }
+                } catch (_: Exception) {}
                 onError(errorMsg)
             }
         ) {

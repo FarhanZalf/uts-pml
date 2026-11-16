@@ -268,6 +268,7 @@ $$\mathbf{TOTAL\ NILAI\ AKHIR} = \mathbf{70\% + 30\% = 100\%\ (Predikat\ A+)}$$
 2. **Database MySQL & Backend Web Laravel ERP (Poin #18 & #27)**:
    - Backend berjalan menggunakan framework Laravel 13 yang terhubung ke database MySQL 8 (`erles_bakery`).
    - Sistem Web Admin berbasis React (`admin/`) memungkinkan manajer toko roti mengubah status pesanan (`pending` -> `processing` -> `ready` -> `completed` -> `cancelled`), mengelola stok produk, dan memantau transaksi keuangan secara terpusat.
+   - **Keamanan Data (Kriptografi Simetris AES-256)**: Kolom data pribadi sensitif (PII) pada tabel `orders`, yaitu `alamat` dan `catatan`, diamankan menggunakan enkripsi simetris **AES-256-CBC** (*Encryption at Rest*) via Eloquent attribute casting `SafeEncrypted`. Saat data disimpan, Laravel otomatis mengenkripsi teks asli menjadi *ciphertext* di MySQL, dan saat diakses oleh aplikasi mobile / API, data otomatis didekripsi secara transparan. Hal ini mencegah kebocoran data privasi pembeli jika terjadi insiden kebocoran database mentah.
 
 ### 4.5 Implementasi Sensor, Hardware, & Media (#20, #21, #22, #25, #26)
 1. **Kamera Fisik (Poin #20)**:

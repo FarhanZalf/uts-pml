@@ -3,6 +3,8 @@ package farhan.zalfanudin.uts
 import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -20,6 +22,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -470,17 +476,35 @@ class CheckoutActivity : AppCompatActivity() {
                         status = createdOrder.status,
                         paymentStatus = createdOrder.paymentStatus.ifEmpty { "unpaid" },
                         paymentMethod = selectedPaymentMethod,
-                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time)
+                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time),
+                        aesKey = createdOrder.aesKey,
+                        rawNameCipher = createdOrder.rawNameCipher,
+                        rawPhoneCipher = createdOrder.rawPhoneCipher,
+                        rawAlamatCipher = createdOrder.rawAlamatCipher,
+                        rawCatatanCipher = createdOrder.rawCatatanCipher
                     )
-                    cartDbHelper.saveOrder(orderToSave)
-                    cartDbHelper.clearCart()
-                    syncOrderToFirestore(orderToSave)
 
-                    // Subscribe ke topic FCM untuk menerima pembaruan status pesanan realtime
-                    com.google.firebase.messaging.FirebaseMessaging.getInstance()
-                        .subscribeToTopic("order_${createdOrder.orderCode}")
+                    // =========================================================================
+                    // [KOTLIN COROUTINE & THREADING MODEL - ORDER BERHASIL DISINKRONISASI]
+                    // 1. Dispatchers.IO (Background Thread): Menyimpan ke SQLite & Firestore secara asinkron
+                    // 2. Dispatchers.Main (Main Thread / UI Thread): Menampilkan Dialog Konfirmasi ke Pengguna
+                    // =========================================================================
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        // [BACKGROUND THREAD - DISPATCHERS.IO]
+                        // Operasi Disk Database SQLite & Network Firestore di thread latar belakang
+                        cartDbHelper.saveOrder(orderToSave)
+                        cartDbHelper.clearCart()
+                        syncOrderToFirestore(orderToSave)
 
-                    showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true, paymentLabel = paymentLabel)
+                        // [MAIN THREAD / UI THREAD - DISPATCHERS.MAIN]
+                        // Kembali ke thread utama untuk subscribe FCM dan menampilkan Dialog UI
+                        withContext(Dispatchers.Main) {
+                            com.google.firebase.messaging.FirebaseMessaging.getInstance()
+                                .subscribeToTopic("order_${createdOrder.orderCode}")
+
+                            showOrderSuccessDialog(createdOrder.orderCode, name, isServerSynced = true, paymentLabel = paymentLabel, aesKey = createdOrder.aesKey)
+                        }
+                    }
                 },
                 onError = { errorMsg ->
                     binding.btnSubmitOrder.isEnabled = true
@@ -490,6 +514,7 @@ class CheckoutActivity : AppCompatActivity() {
                     val dateCode = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Calendar.getInstance().time)
                     val randomSeq = String.format(Locale.getDefault(), "%04d", (1..9999).random())
                     val fallbackCode = "ORD-$dateCode-$randomSeq"
+                    val offlineKey = "ERLES_" + java.util.UUID.randomUUID().toString().replace("-", "").take(10).uppercase()
 
                     val fallbackOrder = farhan.zalfanudin.uts.model.Order(
                         orderCode = fallbackCode,
@@ -502,15 +527,27 @@ class CheckoutActivity : AppCompatActivity() {
                         status = "pending",
                         paymentStatus = "unpaid",
                         paymentMethod = selectedPaymentMethod,
-                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time)
+                        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Calendar.getInstance().time),
+                        aesKey = offlineKey
                     )
-                    cartDbHelper.saveOrder(fallbackOrder)
-                    cartDbHelper.clearCart()
-                    syncOrderToFirestore(fallbackOrder)
 
-                    com.google.firebase.messaging.FirebaseMessaging.getInstance()
-                        .subscribeToTopic("order_$fallbackCode")
-                    showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg, paymentLabel = paymentLabel)
+                    // =========================================================================
+                    // [KOTLIN COROUTINE & THREADING MODEL - FALLBACK OFFLINE]
+                    // Menyimpan transaksi offline ke SQLite di background thread lalu membuka dialog di UI thread
+                    // =========================================================================
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        // [BACKGROUND THREAD - DISPATCHERS.IO]
+                        cartDbHelper.saveOrder(fallbackOrder)
+                        cartDbHelper.clearCart()
+                        syncOrderToFirestore(fallbackOrder)
+
+                        // [MAIN THREAD / UI THREAD - DISPATCHERS.MAIN]
+                        withContext(Dispatchers.Main) {
+                            com.google.firebase.messaging.FirebaseMessaging.getInstance()
+                                .subscribeToTopic("order_$fallbackCode")
+                            showOrderSuccessDialog(fallbackCode, name, isServerSynced = false, offlineNote = errorMsg, paymentLabel = paymentLabel, aesKey = offlineKey)
+                        }
+                    }
                 }
             )
         }
@@ -544,7 +581,8 @@ class CheckoutActivity : AppCompatActivity() {
         customerName: String,
         isServerSynced: Boolean = true,
         offlineNote: String = "",
-        paymentLabel: String = "QRIS"
+        paymentLabel: String = "QRIS",
+        aesKey: String = "Qwertyui87651234"
     ) {
         val syncBadge = if (isServerSynced) {
             "✓ Tersinkronisasi ke Web Admin ERP"
@@ -557,19 +595,25 @@ class CheckoutActivity : AppCompatActivity() {
             Pesanan roti Anda telah berhasil dibuat.
             
             Kode Pesanan: $orderCode
+            Kunci Rahasia AES: $aesKey (16-Karakter)
             Metode Pembayaran: $paymentLabel
             Total Tagihan: ${formatRupiah(grandTotal)}
             Status: Menunggu Konfirmasi (Pending)
             Koneksi: $syncBadge
             
-            Silakan buka tab Pelacakan untuk melakukan pembayaran (QRIS / Transfer BCA).
+            Simpan Kunci AES 16-karakter di atas untuk cek dan lacak pesanan Anda di tab Pelacakan.
         """.trimIndent()
 
         AlertDialog.Builder(this)
             .setTitle("Pesanan Berhasil Dibuat!")
             .setMessage(message)
             .setCancelable(false)
-            .setPositiveButton("Bayar & Lacak Sekarang") { _, _ ->
+            .setPositiveButton("Salin Kunci & Lacak") { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("Order AES Key", aesKey)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, "Kunci AES 16-karakter disalin ke clipboard!", Toast.LENGTH_SHORT).show()
+
                 val trackIntent = Intent(this, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                     putExtra("kode_pesanan", orderCode)
@@ -578,6 +622,12 @@ class CheckoutActivity : AppCompatActivity() {
                 }
                 startActivity(trackIntent)
                 finish()
+            }
+            .setNeutralButton("Salin Kunci") { _, _ ->
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("Order AES Key", aesKey)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, "Kunci AES 16-karakter disalin ke clipboard!", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Tutup") { _, _ ->
                 finish()

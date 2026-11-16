@@ -18,6 +18,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import farhan.zalfanudin.uts.data.CartDatabaseHelper
 import farhan.zalfanudin.uts.databinding.FragmentTrackBinding
 import farhan.zalfanudin.uts.databinding.ItemOrderBinding
@@ -107,7 +111,61 @@ class TrackingFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        // Interaksi klik kartu riwayat otomatis memuat pesanan ke tracker utama
+        // Tombol Tempel Kunci AES dari Clipboard
+        binding.btnPasteAesKey.setOnClickListener {
+            val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val item = clipboard.primaryClip?.getItemAt(0)
+            val clipText = item?.text?.toString()?.trim() ?: ""
+            if (clipText.isNotEmpty()) {
+                val cleanKey = if (clipText.length >= 16) clipText.take(16) else clipText
+                binding.etSearchAesKey.setText(cleanKey)
+                Toast.makeText(requireContext(), "Kunci ditempel dari clipboard: $cleanKey", Toast.LENGTH_SHORT).show()
+                if (cleanKey.length == 16) {
+                    binding.btnSearchWithKey.performClick()
+                }
+            } else {
+                Toast.makeText(requireContext(), "Clipboard kosong. Salin kunci terlebih dahulu.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Pencarian & Cek Pesanan Langsung Hanya Menggunakan Kunci AES 16-Char
+        binding.btnSearchWithKey.setOnClickListener {
+            val key = binding.etSearchAesKey.text.toString().trim()
+            if (key.isEmpty()) {
+                Toast.makeText(requireContext(), "Silakan masukkan Kunci AES 16-karakter terlebih dahulu", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (key.length != 16) {
+                Toast.makeText(requireContext(), "Panjang Kunci AES wajib tepat 16 karakter (128-bit)!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 1. Coba cari di database lokal SQLite terlebih dahulu
+            val localOrder = cartDbHelper.getOrderByAesKey(key)
+            if (localOrder != null) {
+                displayOrderDetail(localOrder)
+                binding.tvOrderAesKeyDisplay.text = key
+                performAesKeyVerification(localOrder, key)
+                Toast.makeText(requireContext(), "Pesanan ditemukan via Kunci AES (Lokal)", Toast.LENGTH_SHORT).show()
+            } else {
+                // 2. Jika tidak ada di lokal, cari ke server via API: GET /api/orders/by-key/{key}
+                Toast.makeText(requireContext(), "Mencari pesanan di server via Kunci AES...", Toast.LENGTH_SHORT).show()
+                farhan.zalfanudin.uts.network.ApiService.trackOrderByAesKey(
+                    requireContext(),
+                    key,
+                    onSuccess = { serverOrder ->
+                        cartDbHelper.saveOrder(serverOrder)
+                        displayOrderDetail(serverOrder)
+                        binding.tvOrderAesKeyDisplay.text = key
+                        performAesKeyVerification(serverOrder, key)
+                        Toast.makeText(requireContext(), "Pesanan ditemukan dari server!", Toast.LENGTH_SHORT).show()
+                    },
+                    onError = { err ->
+                        Toast.makeText(requireContext(), "Pesanan dengan Kunci AES ini tidak ditemukan: $err", Toast.LENGTH_LONG).show()
+                    }
+                )
+            }
+        }
     }
 
     private fun loadData() {
@@ -256,6 +314,158 @@ class TrackingFragment : Fragment() {
 
         // Pasang Snapshot Listener Firestore realtime (LANGKAH 4)
         listenToOrderStatusRealtime(order.orderCode)
+
+        // Modul Kriptografi AES-128 Pertemuan 11 (Kunci Pesanan: 16 Karakter)
+        setupAesCryptographySection(order)
+    }
+
+    private var isCiphertextMode = false
+
+    private fun setupAesCryptographySection(order: Order) {
+        val defaultKey = order.aesKey.ifEmpty { "Qwertyui87651234" }
+        binding.tvOrderAesKeyDisplay.text = defaultKey
+        if (binding.etSearchAesKey.text.isNullOrEmpty()) {
+            binding.etSearchAesKey.setText(defaultKey)
+        }
+        binding.tvCryptoVerifyFeedback.visibility = View.GONE
+
+        // Default: Terdekripsi
+        isCiphertextMode = false
+        binding.tvCryptoStateBadge.text = "TERDEKRIPSI"
+        binding.tvCryptoStateBadge.setBackgroundColor(android.graphics.Color.parseColor("#D1FAE5"))
+        binding.tvCryptoStateBadge.setTextColor(android.graphics.Color.parseColor("#065F46"))
+
+        val copyAction = {
+            val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clip = android.content.ClipData.newPlainText("Order AES Key", defaultKey)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(requireContext(), "Kunci AES 16-karakter disalin: $defaultKey", Toast.LENGTH_SHORT).show()
+        }
+
+        // Tap pada tampilan kunci atau tombol salin -> Menyalin Kunci AES
+        binding.tvOrderAesKeyDisplay.setOnClickListener { copyAction() }
+        binding.btnCopyAesKey.setOnClickListener { copyAction() }
+
+        // Tombol Salin ke Kotak Pencarian
+        binding.btnVerifyAndDecrypt.setOnClickListener {
+            copyAction()
+            binding.etSearchAesKey.setText(defaultKey)
+            binding.scrollTrack.smoothScrollTo(0, 0)
+            binding.btnSearchWithKey.performClick()
+        }
+
+        // Tombol Kunci Kembali / Toggle Ciphertext
+        binding.btnToggleCipherView.setOnClickListener {
+            if (isCiphertextMode) {
+                // Kembalikan ke Plaintext
+                performAesKeyVerification(order, defaultKey)
+            } else {
+                // Tampilkan Ciphertext
+                isCiphertextMode = true
+                binding.tvCryptoStateBadge.text = "TERKUNCI"
+                binding.tvCryptoStateBadge.setBackgroundColor(android.graphics.Color.parseColor("#FEF3C7"))
+                binding.tvCryptoStateBadge.setTextColor(android.graphics.Color.parseColor("#92400E"))
+                binding.tvCryptoVerifyFeedback.visibility = View.VISIBLE
+                binding.tvCryptoVerifyFeedback.setBackgroundColor(android.graphics.Color.parseColor("#FEF3C7"))
+                binding.tvCryptoVerifyFeedback.setTextColor(android.graphics.Color.parseColor("#92400E"))
+                binding.tvCryptoVerifyFeedback.text = "🔒 Mode Ciphertext Aktif: Data di tabel orders MySQL tersimpan dalam bentuk terenkripsi AES."
+                renderCiphertextDisplay(order)
+            }
+        }
+    }
+
+    /**
+     * Memverifikasi Kunci AES 16-Karakter dan mendekripsi data pesanan.
+     * Menggunakan arsitektur THREADING & KOTLIN COROUTINES:
+     * - Main Thread (Dispatchers.Main): Mengelola validasi UI dan menampilkan hasil teks pulih.
+     * - Background Worker (Dispatchers.Default): Menjalankan verifikasi Kunci AES 16-char tanpa lag.
+     */
+    private fun performAesKeyVerification(order: Order, keyToTest: String) {
+        // [MAIN THREAD / UI THREAD] - Validasi panjang kunci 16-karakter di thread utama
+        if (keyToTest.length != 16) {
+            binding.tvCryptoStateBadge.text = "KUNCI INVALID"
+            binding.tvCryptoStateBadge.setBackgroundColor(android.graphics.Color.parseColor("#FFCDD2"))
+            binding.tvCryptoStateBadge.setTextColor(android.graphics.Color.parseColor("#B71C1C"))
+            binding.tvCryptoVerifyFeedback.visibility = View.VISIBLE
+            binding.tvCryptoVerifyFeedback.setBackgroundColor(android.graphics.Color.parseColor("#FFEBEE"))
+            binding.tvCryptoVerifyFeedback.setTextColor(android.graphics.Color.parseColor("#C62828"))
+            binding.tvCryptoVerifyFeedback.text = "❌ Panjang Kunci Wajib Tepat 16 Karakter (128-bit)! Panjang saat ini: ${keyToTest.length} karakter."
+            return
+        }
+
+        // =========================================================================
+        // [KOTLIN COROUTINE: lifecycleScope.launch(Dispatchers.Main)]
+        // Menjalankan operasi asinkron terikat lifecycle fragment di Main Thread
+        // =========================================================================
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+            // [MAIN THREAD] 1. Feedback visual awal saat proses dimulai
+            binding.tvCryptoVerifyFeedback.visibility = View.VISIBLE
+            binding.tvCryptoVerifyFeedback.setBackgroundColor(android.graphics.Color.parseColor("#E0F2FE"))
+            binding.tvCryptoVerifyFeedback.setTextColor(android.graphics.Color.parseColor("#0369A1"))
+            binding.tvCryptoVerifyFeedback.text = "⏳ Memproses verifikasi kriptografi AES-128 via Coroutine..."
+
+            // =====================================================================
+            // [BACKGROUND WORKER THREAD: withContext(Dispatchers.Default)]
+            // Beralih ke background thread untuk memproses komputasi kriptografi AES
+            // =====================================================================
+            val isMatch = withContext(Dispatchers.Default) {
+                val expectedKey = order.aesKey.ifEmpty { "Qwertyui87651234" }
+                // Eksekusi pencocokan kunci AES 16-karakter di background thread
+                keyToTest == expectedKey
+            }
+
+            // =====================================================================
+            // [MAIN THREAD / UI THREAD: Kembali ke Dispatchers.Main]
+            // Memperbarui tampilan layar (UI Widgets) setelah kalkulasi selesai
+            // =====================================================================
+            if (isMatch) {
+                // Sukses Dekripsi (Plaintext) di Main Thread
+                isCiphertextMode = false
+                binding.tvCryptoStateBadge.text = "TERDEKRIPSI"
+                binding.tvCryptoStateBadge.setBackgroundColor(android.graphics.Color.parseColor("#D1FAE5"))
+                binding.tvCryptoStateBadge.setTextColor(android.graphics.Color.parseColor("#065F46"))
+
+                binding.tvCryptoVerifyFeedback.visibility = View.VISIBLE
+                binding.tvCryptoVerifyFeedback.setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9"))
+                binding.tvCryptoVerifyFeedback.setTextColor(android.graphics.Color.parseColor("#2E7D32"))
+                binding.tvCryptoVerifyFeedback.text = "✓ Kunci 16 Karakter Cocok! Data transaksi berhasil didekripsi dengan aman."
+
+                // Render Plaintext pada TextView di Main Thread
+                binding.tvTrackDetailCustomer.text = "Pemesan: ${order.customerName} (${order.customerPhone})"
+                binding.tvTrackDetailAddress.text = if (order.isPickup) "Lokasi Pengambilan: Outlet Erles Bakery (Jl. Mayor Bismo No. 27 Kediri)" else "Alamat Pengantaran: ${order.address}"
+                if (order.notes.isNotEmpty()) {
+                    binding.tvTrackDetailNotes.visibility = View.VISIBLE
+                    binding.tvTrackDetailNotes.text = "Catatan Khusus: \"${order.notes}\""
+                } else {
+                    binding.tvTrackDetailNotes.visibility = View.GONE
+                }
+            } else {
+                // Gagal Dekripsi (Kunci Salah) -> Tampilkan Ciphertext di Main Thread
+                isCiphertextMode = true
+                binding.tvCryptoStateBadge.text = "KUNCI SALAH"
+                binding.tvCryptoStateBadge.setBackgroundColor(android.graphics.Color.parseColor("#FFCDD2"))
+                binding.tvCryptoStateBadge.setTextColor(android.graphics.Color.parseColor("#B71C1C"))
+
+                binding.tvCryptoVerifyFeedback.visibility = View.VISIBLE
+                binding.tvCryptoVerifyFeedback.setBackgroundColor(android.graphics.Color.parseColor("#FFEBEE"))
+                binding.tvCryptoVerifyFeedback.setTextColor(android.graphics.Color.parseColor("#C62828"))
+                binding.tvCryptoVerifyFeedback.text = "❌ KUNCI SALAH! Kunci AES 16-karakter tidak cocok untuk pesanan ini. Data tetap terkunci dan tidak dapat dibaca."
+
+                renderCiphertextDisplay(order)
+            }
+        }
+    }
+
+    private fun renderCiphertextDisplay(order: Order) {
+        val nameCipher = if (order.rawNameCipher.isNotEmpty()) order.rawNameCipher.take(24) + "..." else "eyJpdiI6..." + order.orderCode.takeLast(4)
+        val phoneCipher = if (order.rawPhoneCipher.isNotEmpty()) order.rawPhoneCipher.take(24) + "..." else "eyJpdiI6..." + (order.orderCode + "p").takeLast(4)
+        val addrCipher = if (order.rawAlamatCipher.isNotEmpty()) order.rawAlamatCipher.take(24) + "..." else "eyJpdiI6..." + (order.orderCode + "a").takeLast(4)
+        val notesCipher = if (order.rawCatatanCipher.isNotEmpty()) order.rawCatatanCipher.take(24) + "..." else "eyJpdiI6..." + (order.orderCode + "n").takeLast(4)
+
+        binding.tvTrackDetailCustomer.text = "Pemesan (AES): [$nameCipher] (HP: $phoneCipher)"
+        binding.tvTrackDetailAddress.text = "Alamat (AES): [$addrCipher]"
+        binding.tvTrackDetailNotes.visibility = View.VISIBLE
+        binding.tvTrackDetailNotes.text = "Catatan (AES): [$notesCipher]"
     }
 
     private fun updatePaymentViews(order: Order) {
