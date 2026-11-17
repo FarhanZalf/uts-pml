@@ -6,87 +6,121 @@ import farhan.zalfanudin.uts.model.Product
 
 object DummyData {
 
-    // Kategori Resmi sesuai tabel categories di MySQL Erles Bakery
+    // Kategori Resmi sesuai database MySQL/PostgreSQL Erles Bakery
     val categories = listOf(
         Category(0, "Semua Kategori"),
-        Category(1, "Roti"),
-        Category(2, "Kue"),
-        Category(3, "Kue Kering"),
-        Category(4, "Hampers")
+        Category(1, "Roti Manis"),
+        Category(2, "Donat")
     )
 
-    // Produk sesuai kategori resmi dan data database Erles Bakery
+    // Produk sesuai katalog resmi toko Erles Bakery (Owner: Bu Erni Lestari)
     val products = listOf(
         Product(
             id = 1,
-            name = "Roti Tawar Gandum",
-            category = "Roti",
-            price = 25000.0,
+            name = "Roti Abon",
+            category = "Roti Manis",
+            price = 5000.0,
             stock = 50,
-            description = "Roti tawar gandum utuh, lembut, berserat tinggi, dan sehat untuk sarapan.",
+            description = "Roti manis empuk bertabur abon sapi gurih melimpah dengan olesan saus manis khas bakery.",
             imageRes = R.drawable.ic_bakery_item
         ),
         Product(
             id = 2,
-            name = "Butter Croissant Klasik",
-            category = "Roti",
-            price = 18000.0,
-            stock = 25,
-            description = "Pastry croissant berlapis renyah dengan aroma mentega murni Prancis khas Erles.",
+            name = "Roti Sosis",
+            category = "Roti Manis",
+            price = 5000.0,
+            stock = 50,
+            description = "Roti lembut dengan isian sosis sapi pilihan berpadu saus gurih favorit sarapan keluarga.",
             imageRes = R.drawable.ic_bakery_item
         ),
         Product(
             id = 3,
-            name = "Roti Sobek Cokelat Lumer",
-            category = "Roti",
-            price = 16000.0,
-            stock = 30,
-            description = "Roti sobek lembut dengan isian cokelat lumer manis gurih yang melimpah.",
+            name = "Roti Keju",
+            category = "Roti Manis",
+            price = 5000.0,
+            stock = 40,
+            description = "Roti manis lembut berisikan keju gurih dengan parutan keju cheddar panggang di atasnya.",
             imageRes = R.drawable.ic_bakery_item
         ),
         Product(
             id = 4,
-            name = "Red Velvet Slice Cake",
-            category = "Kue",
-            price = 28000.0,
-            stock = 15,
-            description = "Kue tart red velvet lembut dilapisi krim keju spesial yang lumer di mulut.",
+            name = "Roti Pizza",
+            category = "Roti Manis",
+            price = 5000.0,
+            stock = 40,
+            description = "Roti mini pizza dengan topping potongan sosis, saus tomat rempah, dan taburan keju leleh.",
             imageRes = R.drawable.ic_bakery_item
         ),
         Product(
             id = 5,
-            name = "Black Forest Mini Tart",
-            category = "Kue",
-            price = 35000.0,
-            stock = 10,
-            description = "Kue tart cokelat klasik dengan taburan dark chocolate serut dan ceri segar.",
+            name = "Roti Sakura",
+            category = "Roti Manis",
+            price = 5000.0,
+            stock = 35,
+            description = "Roti manis klasik dibentuk kelopak bunga sakura yang cantik dan harum mentega segar.",
             imageRes = R.drawable.ic_bakery_item
         ),
         Product(
             id = 6,
-            name = "Nastar Nanas Butter Wijsman",
-            category = "Kue Kering",
-            price = 65000.0,
-            stock = 20,
-            description = "Kue kering nastar lembut dengan selai nanas asli segar dan butter wijsman harum.",
+            name = "Roti Kepang",
+            category = "Roti Manis",
+            price = 5000.0,
+            stock = 35,
+            description = "Roti kepang tradisional dengan olesan mentega manis dan taburan gula pasir renyah.",
             imageRes = R.drawable.ic_bakery_item
         ),
         Product(
             id = 7,
-            name = "Kastengel Keju Edam Gurih",
-            category = "Kue Kering",
-            price = 70000.0,
-            stock = 18,
-            description = "Kue kering keju edam asli Belanda yang gurih renyah dan lumer saat dikunyah.",
+            name = "Roti Pisang Coklat",
+            category = "Roti Manis",
+            price = 5000.0,
+            stock = 50,
+            description = "Kombinasi klasik pisang raja manis alami dan lelehan cokelat legit berbalut adonan roti empuk.",
             imageRes = R.drawable.ic_bakery_item
         ),
         Product(
             id = 8,
-            name = "Hampers Spesial Erles Bakery",
-            category = "Hampers",
-            price = 145000.0,
-            stock = 8,
-            description = "Paket hampers cantik berisi kombinasi aneka roti manis, kue kering, dan kartu ucapan.",
+            name = "Roti Pisang Coklat Keju",
+            category = "Roti Manis",
+            price = 6000.0,
+            stock = 45,
+            description = "Perpaduan sempurna pisang manis, lelehan cokelat lumer, dan keju cheddar gurih dalam satu roti.",
+            imageRes = R.drawable.ic_bakery_item
+        ),
+        Product(
+            id = 9,
+            name = "Roti Abon 1 Loyang (40 x 40)",
+            category = "Roti Manis",
+            price = 60000.0,
+            stock = 15,
+            description = "Porsi besar 1 loyang ukuran 40 × 40 cm penuh abon sapi tebal, sangat cocok untuk hantaran dan acara keluarga.",
+            imageRes = R.drawable.ic_bakery_item
+        ),
+        Product(
+            id = 10,
+            name = "Donuts Biasa",
+            category = "Donat",
+            price = 2500.0,
+            stock = 60,
+            description = "Donat kentang tradisional super empuk dan kenyal, ditaburi gula halus dingin yang manis pas.",
+            imageRes = R.drawable.ic_bakery_item
+        ),
+        Product(
+            id = 11,
+            name = "Donuts Meses Coklat",
+            category = "Donat",
+            price = 5000.0,
+            stock = 50,
+            description = "Donat empuk dengan olesan krim manis lembut dan taburan meses cokelat tebal yang melimpah.",
+            imageRes = R.drawable.ic_bakery_item
+        ),
+        Product(
+            id = 12,
+            name = "Donuts Premium",
+            category = "Donat",
+            price = 7000.0,
+            stock = 40,
+            description = "Donat kentang premium bertekstur lembut istimewa dengan pilihan topping glaze artisan cokelat dan keju.",
             imageRes = R.drawable.ic_bakery_item
         )
     )

@@ -65,15 +65,10 @@ class MenuFragment : Fragment() {
         farhan.zalfanudin.uts.network.ApiService.getCategories(
             requireContext(),
             onSuccess = { categories ->
-                if (_binding != null && isAdded) {
-                    allCategories = categories.map { it.name }.toMutableList()
-                    val spinnerAdapter = ArrayAdapter(
-                        requireContext(),
-                        android.R.layout.simple_spinner_item,
-                        allCategories
-                    )
-                    spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    binding.spinnerCategory.adapter = spinnerAdapter
+                if (_binding != null && isAdded && categories.isNotEmpty()) {
+                    allCategories.clear()
+                    allCategories.addAll(categories.map { it.name })
+                    setupCategorySpinner()
                 }
             },
             onError = { _ ->
@@ -213,18 +208,23 @@ class MenuFragment : Fragment() {
 
     // 3. Setup Spinner (Filter Kategori Roti)
     private fun setupCategorySpinner() {
-        val categoryNames = allCategories
         val spinnerAdapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_item,
-            categoryNames
+            allCategories
         )
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerCategory.adapter = spinnerAdapter
 
+        // Pertahankan posisi pilihan kategori yang aktif
+        val currentIndex = allCategories.indexOf(selectedCategory)
+        if (currentIndex >= 0) {
+            binding.spinnerCategory.setSelection(currentIndex)
+        }
+
         binding.spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedCategory = categoryNames.getOrNull(position) ?: "Semua Kategori"
+                selectedCategory = allCategories.getOrNull(position) ?: "Semua Kategori"
                 filterAndDisplayProducts()
             }
 
