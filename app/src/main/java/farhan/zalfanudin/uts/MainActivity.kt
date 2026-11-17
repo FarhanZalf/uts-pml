@@ -49,6 +49,16 @@ class MainActivity : AppCompatActivity() {
         ErlesFirebaseMessagingService.createNotificationChannel(this)
         checkNotificationPermission()
 
+        // Registrasi Topik Global FCM untuk Testing & Ambil Token
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("erles_promo")
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("order_test")
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                android.util.Log.d("ErlesFCM", "CURRENT_FCM_TOKEN: $token")
+            }
+        }
+
         // 1. Setup Toolbar & OptionsMenu (Poin Penilaian Dosen: OptionsMenu)
         setSupportActionBar(binding.topToolbar)
 
