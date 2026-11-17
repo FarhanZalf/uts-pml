@@ -20,6 +20,7 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import farhan.zalfanudin.uts.data.CartDatabaseHelper
@@ -46,6 +47,7 @@ class TrackingFragment : Fragment() {
     private lateinit var cartDbHelper: CartDatabaseHelper
     private var currentDisplayedOrder: Order? = null
     private var firestoreListener: com.google.firebase.firestore.ListenerRegistration? = null
+    private var pollingJob: kotlinx.coroutines.Job? = null
 
     // Poin UTS #20: Kamera, #26: Gallery & #33: Supabase Storage
     private var cameraPhotoUri: Uri? = null
@@ -314,6 +316,9 @@ class TrackingFragment : Fragment() {
 
         // Pasang Snapshot Listener Firestore realtime (LANGKAH 4)
         listenToOrderStatusRealtime(order.orderCode)
+
+        // Auto-polling Coroutine setiap 3 detik agar perubahan status di Web Admin langsung realtime
+        startOrderStatusPolling(order.orderCode)
 
         // Modul Kriptografi AES-128 Pertemuan 11 (Kunci Pesanan: 16 Karakter)
         setupAesCryptographySection(order)
@@ -729,9 +734,23 @@ class TrackingFragment : Fragment() {
                         updateStatusViews(refreshed)
                         updatePaymentViews(refreshed)
                         populateOrderHistoryList(cartDbHelper.getAllOrders())
+
+                        // Sinkronkan update status ini ke Firestore agar konsisten
+                        try {
+                            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                .collection("order_status")
+                                .document(serverOrder.orderCode)
+                                .update(
+                                    mapOf(
+                                        "status" to serverOrder.status,
+                                        "payment_status" to serverOrder.paymentStatus
+                                    )
+                                )
+                        } catch (_: Exception) {}
+
                         Toast.makeText(
                             requireContext(),
-                            "Status diperbarui oleh Web Admin: ${serverOrder.status.uppercase(Locale.getDefault())} (${serverOrder.paymentStatus.uppercase(Locale.getDefault())})",
+                            "Status diperbarui oleh Web Admin: ${serverOrder.status.uppercase(Locale.getDefault())}",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -741,6 +760,23 @@ class TrackingFragment : Fragment() {
                 // Jika offline atau server belum connect, tetap gunakan data lokal
             }
         )
+    }
+
+    // =========================================================================
+    // [KOTLIN COROUTINE: AUTO-POLLING STATUS PESANAN DARI SERVER WEB ADMIN]
+    // Berjalan di latar belakang setiap 3 detik secara non-blocking.
+    // Saat status pesanan diubah di Web Admin (Processing -> Ready -> Selesai),
+    // aplikasi mobile langsung mendeteksi dan meng-update UI secara otomatis.
+    // =========================================================================
+    private fun startOrderStatusPolling(orderCode: String) {
+        pollingJob?.cancel()
+        pollingJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+            while (isActive) {
+                kotlinx.coroutines.delay(3000)
+                if (!isAdded || _binding == null) break
+                syncOrderWithServer(orderCode)
+            }
+        }
     }
 
     private fun updateStatusViews(order: Order) {
@@ -1276,6 +1312,8 @@ class TrackingFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
+        pollingJob?.cancel()
+        pollingJob = null
         // Lepas snapshot listener saat fragment berhenti agar hemat resource
         firestoreListener?.remove()
         firestoreListener = null
@@ -1283,6 +1321,8 @@ class TrackingFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        pollingJob?.cancel()
+        pollingJob = null
         firestoreListener?.remove()
         firestoreListener = null
         _binding = null
